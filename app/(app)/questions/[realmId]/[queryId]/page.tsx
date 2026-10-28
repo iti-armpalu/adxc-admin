@@ -6,7 +6,7 @@
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Download, Lock } from "lucide-react";
+import { ArrowLeft, Download, Lock } from "lucide-react";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { CopyButton } from "@/components/copy-button";
 import { MarkdownText } from "@/components/markdown-text";
@@ -104,8 +104,9 @@ export default async function QuestionDetailPage({
         <div className="mx-auto max-w-6xl space-y-6 px-4 py-8 md:px-8">
             {isRunning(q.outcome) && <AutoRefresh />}
 
-            <Link href="/questions" className="inline-block text-sm text-primary underline-offset-4 hover:underline">
-                ← Questions
+            <Link href="/questions" className="inline-flex items-center gap-1.5 text-sm text-primary underline-offset-4 hover:underline">
+                <ArrowLeft className="size-4" />
+                Questions
             </Link>
 
             <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
@@ -275,8 +276,9 @@ function LoadError({ error }: { error: unknown }) {
             : String(error);
     return (
         <div className="mx-auto max-w-2xl space-y-3 px-4 py-8 md:px-8">
-            <Link href="/questions" className="text-sm text-primary underline-offset-4 hover:underline">
-                ← Questions
+            <Link href="/questions" className="inline-flex items-center gap-1.5 text-sm text-primary underline-offset-4 hover:underline">
+                <ArrowLeft className="size-4" />
+                Questions
             </Link>
             <h1 className="text-h3">Question</h1>
             <p className="text-sm text-muted-foreground">
