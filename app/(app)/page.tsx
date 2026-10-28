@@ -43,10 +43,13 @@ export default async function OverviewPage() {
     const defaultRealm = realms.find((r) => r.is_default);
 
     return (
-        <div className="mx-auto max-w-5xl space-y-8 px-4 py-8 md:px-8">
-            <h1>Overview</h1>
+        <div className="mx-auto max-w-5xl space-y-12 px-4 py-8 md:px-8">
+            <header className="space-y-1">
+                <h1>Overview</h1>
+                <p className="text-sm text-muted-foreground">Your account at a glance.</p>
+            </header>
 
-            <section className="grid gap-px border bg-border sm:grid-cols-3" aria-label="Summary">
+            <section className="grid gap-4 sm:grid-cols-3" aria-label="Summary">
                 <Stat label="Credits" value={formatTokens(balance.balance)} note="Charged only when an answer is bought." />
                 <Stat label="Questions asked" value={history.total.toLocaleString("en-GB")} />
                 <Stat label="Projects" value={realms.length.toLocaleString("en-GB")} />
@@ -72,7 +75,8 @@ export default async function OverviewPage() {
                 <div>
                     <h2>Connect an agent</h2>
                     <p className="text-sm text-muted-foreground">
-                        Paste this address into your agent&apos;s MCP or connector settings. Only members of {org.org_name}{" "}
+                        Paste this address into your agent&apos;s MCP or connector settings. Only members of{" "}
+                        <span className="font-semibold text-foreground">{org.org_name}</span>{" "}
                         can use it.
                     </p>
                 </div>
@@ -84,7 +88,7 @@ export default async function OverviewPage() {
                         <p className="text-sm text-muted-foreground">Your connect address isn&apos;t available yet.</p>
                     )}
                     <p className="text-sm text-foreground-alt">
-                        Questions asked here go to {defaultRealm ? <strong>{defaultRealm.name}</strong> : "your default project"}.
+                        Questions asked here go to {defaultRealm ? <span className="font-semibold text-foreground">{defaultRealm.name}</span> : "your default project"}.
                         To keep work for different clients apart, give each one its own project and address on{" "}
                         <Link href="/projects" className="text-primary underline-offset-4 hover:underline">
                             Projects
@@ -121,7 +125,7 @@ export default async function OverviewPage() {
 
 function Stat({ label, value, note }: { label: string; value: string; note?: string }) {
     return (
-        <div className="space-y-1 bg-card p-4">
+        <div className="space-y-1 border bg-card p-5">
             <p className="text-caption uppercase text-muted-foreground">{label}</p>
             <p className="text-3xl font-medium text-foreground">{value}</p>
             {note && <p className="text-xs text-muted-foreground">{note}</p>}
