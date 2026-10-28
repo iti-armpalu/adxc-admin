@@ -1,73 +1,116 @@
-// app/(app)/page.tsx
+// app/(app)/page.tsx — Overview
 //
-// TEMPORARY smoke test for the v3 client: proves the dev API key reaches real
-// data (org, balance, projects, recent questions). Replaced by the Overview page.
+// For the client's account owner landing in the panel: how much is left, is anything
+// stuck waiting on us, how do we connect an agent, and what has been asked lately.
 
+import Link from "next/link";
+import { CopyField } from "@/components/copy-field";
+import { QuestionRow } from "@/components/question-row";
 import { AdxcApiError, getBalance, getCurrentOrg, listOrgQueries, listRealms } from "@/lib/adxc/client";
-import { formatRelative, formatTokens } from "@/lib/adxc/format";
-import { statusLabel } from "@/lib/adxc/outcome";
+import { formatTokens } from "@/lib/adxc/format";
+import { orgMcpUrl } from "@/lib/adxc/mcp";
+import type { OrgQueryListItem } from "@/lib/adxc/types";
+
+// The API has no outcome filter, so "needs attention" is picked from the newest page.
+// 100 is the API's page maximum; older stuck items won't show here, but will on Questions.
+const SCAN_LIMIT = 100;
+const RECENT_COUNT = 5;
+
+const needsAttention = (q: OrgQueryListItem) => q.outcome === "needs_input" || (q.outcome === "quoted" && !q.paid);
 
 async function load() {
     const org = await getCurrentOrg();
-    const [balance, realms, recent] = await Promise.all([
+    const [balance, realms, history] = await Promise.all([
         getBalance(org.org_id),
         listRealms(org.org_id),
-        listOrgQueries(org.org_id, { limit: 5 }),
+        listOrgQueries(org.org_id, { limit: SCAN_LIMIT }),
     ]);
-    return { org, balance, realms, recent };
+    return { org, balance, realms: realms.realms, history };
 }
 
-export default async function Home() {
+export default async function OverviewPage() {
     let data: Awaited<ReturnType<typeof load>>;
     try {
         data = await load();
     } catch (err) {
-        const message =
-            err instanceof AdxcApiError
-                ? `${err.status} — ${typeof err.detail === "string" ? err.detail : JSON.stringify(err.detail)}`
-                : String(err);
-        return <ApiUnavailable message={message} />;
+        return <ApiUnavailable error={err} />;
     }
-    const { org, balance, realms, recent } = data;
+    const { org, balance, realms, history } = data;
+
+    const attention = history.queries.filter(needsAttention);
+    const recent = history.queries.slice(0, RECENT_COUNT);
+    const mcpUrl = orgMcpUrl(org.slug);
+    const defaultRealm = realms.find((r) => r.is_default);
 
     return (
-        <div className="mx-auto max-w-4xl space-y-8 px-4 py-8 md:px-8">
-            <header className="space-y-1">
-                <p className="text-sm text-muted-foreground">Connected to</p>
-                <h1>{org.org_name}</h1>
-            </header>
+        <div className="mx-auto max-w-5xl space-y-8 px-4 py-8 md:px-8">
+            <h1>Overview</h1>
 
-            <section className="border p-4">
-                <p className="text-sm text-muted-foreground">Credits remaining</p>
-                <p className="text-3xl font-bold">{formatTokens(balance.balance)}</p>
+            <section className="grid gap-px border bg-border sm:grid-cols-3" aria-label="Summary">
+                <Stat label="Credits" value={formatTokens(balance.balance)} note="Charged only when an answer is bought." />
+                <Stat label="Questions asked" value={history.total.toLocaleString("en-GB")} />
+                <Stat label="Projects" value={realms.length.toLocaleString("en-GB")} />
             </section>
 
-            <section className="space-y-2">
-                <h2>Projects ({realms.realms.length})</h2>
-                <ul className="divide-y border">
-                    {realms.realms.map((r) => (
-                        <li key={r.realm_id} className="flex items-center justify-between px-4 py-2 text-sm">
-                            <span>{r.name}</span>
-                            {r.is_default && <span className="text-muted-foreground">Default</span>}
-                        </li>
-                    ))}
-                </ul>
+            {attention.length > 0 && (
+                <section className="space-y-3">
+                    <div>
+                        <h2>Needs attention</h2>
+                        <p className="text-sm text-muted-foreground">
+                            Questions waiting for an answer or a decision to buy. Pick them up in the agent that asked.
+                        </p>
+                    </div>
+                    <ul className="divide-y border bg-card">
+                        {attention.map((q) => (
+                            <QuestionRow key={q.query_id} q={q} />
+                        ))}
+                    </ul>
+                </section>
+            )}
+
+            <section className="space-y-3">
+                <div>
+                    <h2>Connect an agent</h2>
+                    <p className="text-sm text-muted-foreground">
+                        Paste this address into your agent&apos;s MCP or connector settings. Only members of {org.org_name}{" "}
+                        can use it.
+                    </p>
+                </div>
+                <div className="space-y-3 border bg-card p-4">
+                    {mcpUrl ? (
+                        <CopyField value={mcpUrl} />
+                    ) : (
+                        // TODO: wire up — org has no slug, so the address can't be built. Ask Rob.
+                        <p className="text-sm text-muted-foreground">Your connect address isn&apos;t available yet.</p>
+                    )}
+                    <p className="text-sm text-foreground-alt">
+                        Questions asked here go to {defaultRealm ? <strong>{defaultRealm.name}</strong> : "your default project"}.
+                        To keep work for different clients apart, give each one its own project and address on{" "}
+                        <Link href="/projects" className="text-primary underline-offset-4 hover:underline">
+                            Projects
+                        </Link>
+                        .
+                    </p>
+                </div>
             </section>
 
-            <section className="space-y-2">
-                <h2>Recent questions ({recent.total})</h2>
-                {recent.queries.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No questions yet. Connect an agent to get started.</p>
+            <section className="space-y-3">
+                <div className="flex items-end justify-between gap-4">
+                    <h2>Recent questions</h2>
+                    {history.total > 0 && (
+                        <Link href="/questions" className="text-sm text-primary underline-offset-4 hover:underline">
+                            View all
+                        </Link>
+                    )}
+                </div>
+                {recent.length === 0 ? (
+                    <p className="border bg-card px-4 py-6 text-sm text-muted-foreground">
+                        No questions yet. Once an agent is connected, everything it asks shows up here.
+                    </p>
                 ) : (
-                    <ul className="divide-y border">
-                        {recent.queries.map((q) => (
-                            <li key={q.query_id} className="space-y-1 px-4 py-3 text-sm">
-                                <p className="text-foreground">{q.question}</p>
-                                <p className="text-muted-foreground">
-                                    {statusLabel(q)} · {q.realm_name} · {q.asked_by} · {formatRelative(q.asked_at)}
-                                    {q.price ? ` · ${formatTokens(q.price)} credits` : ""}
-                                </p>
-                            </li>
+                    <ul className="divide-y border bg-card">
+                        {recent.map((q) => (
+                            <QuestionRow key={q.query_id} q={q} />
                         ))}
                     </ul>
                 )}
@@ -76,14 +119,28 @@ export default async function Home() {
     );
 }
 
-function ApiUnavailable({ message }: { message: string }) {
+function Stat({ label, value, note }: { label: string; value: string; note?: string }) {
+    return (
+        <div className="space-y-1 bg-card p-4">
+            <p className="text-caption uppercase text-muted-foreground">{label}</p>
+            <p className="text-3xl font-medium text-foreground">{value}</p>
+            {note && <p className="text-xs text-muted-foreground">{note}</p>}
+        </div>
+    );
+}
+
+function ApiUnavailable({ error }: { error: unknown }) {
+    const message =
+        error instanceof AdxcApiError
+            ? `${error.status} — ${typeof error.detail === "string" ? error.detail : JSON.stringify(error.detail)}`
+            : String(error);
     return (
         <div className="mx-auto max-w-2xl space-y-2 px-4 py-8 md:px-8">
             <h1>Can&apos;t reach the ADXC API</h1>
             <p className="text-sm text-muted-foreground">{message}</p>
             <p className="text-sm text-muted-foreground">
-                For local development, set <code>ADXC_DEV_API_KEY</code> in <code>.env.local</code> to an org API
-                key and restart <code>npm run dev</code>.
+                For local development, set <code>ADXC_DEV_API_KEY</code> in <code>.env.local</code> and restart{" "}
+                <code>npm run dev</code>.
             </p>
         </div>
     );
