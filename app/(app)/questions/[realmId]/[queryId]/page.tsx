@@ -133,9 +133,16 @@ export default async function QuestionDetailPage({
                             <SectionTitle
                                 title={paid ? "Answer" : "Preview"}
                                 note={paid ? undefined : "A shortened preview, free to read. The full answer unlocks when it's bought."}
-                                action={q.answer ? <CopyButton text={q.answer} label="Copy answer" /> : undefined}
                             />
-                            <div className="border bg-card p-5 text-foreground-alt md:p-6">
+                            <div className="group relative border bg-card p-5 text-foreground-alt md:p-6">
+                                {q.answer && (
+                                    // Appears on hover/focus; always shown on touch screens, which can't hover.
+                                    <CopyButton
+                                        text={q.answer}
+                                        label="Copy answer"
+                                        className="absolute top-2 right-2 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
+                                    />
+                                )}
                                 <MarkdownText text={q.answer ?? q.abstract ?? ""} />
                             </div>
                         </section>

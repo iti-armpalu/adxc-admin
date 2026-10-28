@@ -3,9 +3,13 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-/** Copies `text`; markdown emphasis (** and `) is stripped so it pastes cleanly into docs and slides. */
-export function CopyButton({ text, label = "Copy" }: { text: string; label?: string }) {
+/**
+ * Icon-only copy button. Markdown emphasis (** and `) is stripped so the text pastes
+ * cleanly into docs and slides. Style its visibility from the parent (e.g. show on hover).
+ */
+export function CopyButton({ text, label = "Copy", className }: { text: string; label?: string; className?: string }) {
     const [copied, setCopied] = useState(false);
 
     async function copy() {
@@ -19,9 +23,16 @@ export function CopyButton({ text, label = "Copy" }: { text: string; label?: str
     }
 
     return (
-        <Button type="button" variant="outline" size="sm" onClick={copy} className="rounded-xs bg-card">
-            {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-            <span>{copied ? "Copied" : label}</span>
+        <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={copy}
+            aria-label={copied ? "Copied" : label}
+            title={copied ? "Copied" : label}
+            className={cn("rounded-xs text-muted-foreground hover:text-foreground", className)}
+        >
+            {copied ? <Check className="size-4 text-success" /> : <Copy className="size-4" />}
         </Button>
     );
 }
