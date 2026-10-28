@@ -97,28 +97,33 @@ export default async function QuestionDetailPage({
     const supplierName = (id: string) => suppliers.find((s) => s.supplier_id === id)?.display_name ?? id;
 
     return (
-        <div className="mx-auto max-w-6xl space-y-10 px-4 py-8 md:px-8">
+        <div className="mx-auto max-w-6xl space-y-6 px-4 py-8 md:px-8">
             {isRunning(q.outcome) && <AutoRefresh />}
 
-            <header className="max-w-3xl space-y-3">
-                <Link href="/questions" className="text-sm text-primary underline-offset-4 hover:underline">
-                    ← Questions
-                </Link>
-                <p className="text-caption uppercase text-muted-foreground">Question</p>
-                <h1 className="text-h4 leading-snug md:text-h3">{q.question}</h1>
-                {/* On large screens these facts live in the side column. */}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground lg:hidden">
-                    <StatusBadge outcome={q.outcome} paid={paid} />
-                    {realmName && <span>{realmName}</span>}
-                    {q.price && <span>{formatTokens(q.price)} credits</span>}
-                </div>
-                {note && <p className="text-sm text-foreground-alt">{note}</p>}
-                {q.message && <p className="border bg-card p-4 text-sm text-foreground-alt">{q.message}</p>}
-            </header>
+            <Link href="/questions" className="inline-block text-sm text-primary underline-offset-4 hover:underline">
+                ← Questions
+            </Link>
 
             <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
                 {/* Main column */}
                 <div className="min-w-0 space-y-10">
+                    <header className="space-y-4">
+                        <div className="space-y-2 border-l-2 border-primary bg-card px-5 py-4 md:px-6 md:py-5">
+                            <p className="text-caption uppercase text-muted-foreground">Question</p>
+                            <h1 className="text-lg leading-relaxed font-normal tracking-normal text-foreground md:text-xl">
+                                {q.question}
+                            </h1>
+                        </div>
+                        {/* On large screens these facts live in the side column. */}
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground lg:hidden">
+                            <StatusBadge outcome={q.outcome} paid={paid} />
+                            {realmName && <span>{realmName}</span>}
+                            {q.price && <span>{formatTokens(q.price)} credits</span>}
+                        </div>
+                        {note && <p className="text-sm text-foreground-alt">{note}</p>}
+                        {q.message && <p className="border bg-card p-4 text-sm text-foreground-alt">{q.message}</p>}
+                    </header>
+
                     {(q.answer || q.abstract) && (
                         <section className="space-y-3">
                             <SectionTitle
