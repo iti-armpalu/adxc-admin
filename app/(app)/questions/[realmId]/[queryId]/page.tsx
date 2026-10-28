@@ -112,12 +112,11 @@ export default async function QuestionDetailPage({
             <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
                 {/* Main column */}
                 <div className="min-w-0 space-y-10">
-                    <header className="space-y-4">
-                        <div className="space-y-2 border-l-2 border-primary bg-card px-5 py-4 md:px-6 md:py-5">
-                            <p className="text-caption uppercase text-muted-foreground">Question</p>
-                            <h1 className="text-base leading-relaxed font-normal tracking-normal text-foreground">
-                                {q.question}
-                            </h1>
+                    <header className="space-y-3">
+                        {/* The page's h1, styled like the section headings below it. */}
+                        <h1 className="text-h4">Question</h1>
+                        <div className="border border-l-2 border-l-primary bg-card p-5 md:p-6">
+                            <p className="leading-relaxed text-foreground">{q.question}</p>
                         </div>
                         {/* On large screens these facts live in the side column. */}
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground lg:hidden">
@@ -204,6 +203,8 @@ export default async function QuestionDetailPage({
 
                 {/* Side column */}
                 <aside className="space-y-6 lg:sticky lg:top-8">
+                    <section className="space-y-2">
+                    <p className="text-caption uppercase text-muted-foreground">Details</p>
                     <dl className="divide-y border bg-card text-sm">
                         <Fact label="Status"><StatusBadge outcome={q.outcome} paid={paid} /></Fact>
                         {realmName && <Fact label="Project">{realmName}</Fact>}
@@ -213,6 +214,7 @@ export default async function QuestionDetailPage({
                         )}
                         {dataAsOf && <Fact label="Data as of">{formatDate(dataAsOf)}</Fact>}
                     </dl>
+                    </section>
 
                     {artifacts.length > 0 && (
                         <section className="space-y-2">
