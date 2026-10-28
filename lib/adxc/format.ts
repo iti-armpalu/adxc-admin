@@ -25,3 +25,19 @@ export function formatRelative(iso: string, now = Date.now()) {
     }
     return "just now";
 }
+
+/** "2026-07-31" or an ISO timestamp → "31 Jul 2026". Returns the input if it isn't a date. */
+export function formatDate(value: string) {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime())
+        ? value
+        : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
+/** ISO timestamp → "31 Jul 2026, 09:14". */
+export function formatDateTime(value: string) {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime())
+        ? value
+        : d.toLocaleString("en-GB", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
