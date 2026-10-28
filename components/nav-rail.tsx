@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
@@ -25,14 +24,8 @@ export function NavRail({
             {/* ── Desktop: vertical rail ──────────────────────────────────────── */}
             <div className="hidden md:flex flex-col items-center w-12 h-screen bg-brand-700 shrink-0 sticky top-0 z-50 py-3 gap-6">
                 <Link href={homeHref} className="shrink-0">
-                    <Image
-                        src="/adxc-logo-white-stacked.svg"
-                        alt="ADXC"
-                        width={21}
-                        height={24}
-                        className="w-7 object-contain"
-                        priority
-                    />
+                    {/* eslint-disable-next-line @next/next/no-img-element -- SVG: plain img by convention */}
+                    <img src="/adxc-logo-white-stacked.svg" alt="ADXC" width={21} height={24} className="w-7 object-contain" />
                 </Link>
                 <div className="w-5 h-px bg-white/15 shrink-0" />
             </div>
@@ -40,14 +33,8 @@ export function NavRail({
             {/* ── Mobile: horizontal top bar ──────────────────────────────────── */}
             <div className="md:hidden flex items-center justify-between px-4 h-12 bg-brand-700 shrink-0 sticky top-0 z-50 w-full">
                 <Link href={homeHref} className="shrink-0">
-                    <Image
-                        src="/adxc-logo-white-stacked.svg"
-                        alt="ADXC"
-                        width={21}
-                        height={24}
-                        className="w-7 object-contain"
-                        priority
-                    />
+                    {/* eslint-disable-next-line @next/next/no-img-element -- SVG: plain img by convention */}
+                    <img src="/adxc-logo-white-stacked.svg" alt="ADXC" width={21} height={24} className="w-7 object-contain" />
                 </Link>
                 <button
                     onClick={onMobileMenuToggle}
