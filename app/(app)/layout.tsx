@@ -1,18 +1,16 @@
 // app/(app)/layout.tsx
 //
-// Authenticated shell. All routes under (app)/ inherit the NavRail.
-// (auth)/login sits outside this group so it renders with no chrome.
+// Authenticated shell. Brand rail on desktop, 48px top bar on mobile.
+// TODO: tabs (Overview, Questions, Projects, Team), org switcher and balance
+// land here with the shell rebuild.
 
-export default function AppLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+import { NavRail } from "@/components/nav-rail";
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
     return (
-        <div className="flex h-screen overflow-hidden">
-            <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-                {children}
-            </div>
+        <div className="flex min-h-screen flex-col md:flex-row">
+            <NavRail />
+            <main className="flex-1 min-w-0">{children}</main>
         </div>
     );
 }

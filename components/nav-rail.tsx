@@ -4,8 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
-export type NavRailVariant = "admin" | "member";
-
 // NavRail renders differently per breakpoint:
 // Mobile (<md): horizontal top bar with logo + hamburger trigger
 // Desktop (≥md): vertical brand strip on the left
@@ -14,15 +12,13 @@ export type NavRailVariant = "admin" | "member";
 // to open/close the mobile sidebar drawer.
 
 export function NavRail({
-    variant = "admin",
     mobileMenuOpen,
     onMobileMenuToggle,
 }: {
-    variant?: NavRailVariant;
     mobileMenuOpen?: boolean;
     onMobileMenuToggle?: () => void;
 }) {
-    const homeHref = variant === "admin" ? "/admin" : "/organisations";
+    const homeHref = "/";
 
     return (
         <>

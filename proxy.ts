@@ -1,29 +1,14 @@
+// proxy.ts — Next 16 request proxy (formerly middleware).
+//
+// Auth is not wired yet: in development the API client signs requests with
+// ADXC_DEV_API_KEY, so every route is open locally.
+// TODO: wire up Stytch — redirect to /login when there is no Stytch session,
+// and send signed-in visitors on /login to "/".
+
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
-export function proxy(request: NextRequest) {
-    const { pathname } = request.nextUrl;
-
-    // Redirect root to login
-    if (pathname === "/") {
-        return NextResponse.redirect(new URL("/login", request.url));
-    }
-
-    // Protect admin and org routes
-    const isProtected =
-        pathname.startsWith("/admin") ||
-        pathname.startsWith("/organisations");
-
-    const token = request.cookies.get("adxc_auth");
-
-    if (isProtected && !token) {
-        return NextResponse.redirect(new URL("/login", request.url));
-    }
-
-    // Redirect logged-in users away from login page
-    if (pathname === "/login" && token) {
-        return NextResponse.redirect(new URL("/admin", request.url));
-    }
+export function proxy() {
+    return NextResponse.next();
 }
 
 export const config = {
