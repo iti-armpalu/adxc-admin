@@ -1,11 +1,131 @@
-// TODO: build Projects — realms list, create, and each project's connect address.
-export default function ProjectsPage() {
+// app/(app)/projects/page.tsx — Projects (realms in the API)
+//
+// For the account owner organising work by client: what projects exist, how much has
+// been asked in each, and how to point an agent at one. A bought answer is free to
+// everyone asking in the same project, and never visible from another.
+
+import Link from "next/link";
+import { CopyField } from "@/components/copy-field";
+import { CreateProjectForm } from "@/components/projects/create-project-form";
+import { AdxcApiError, getCurrentOrg, listRealmQueries, listRealms } from "@/lib/adxc/client";
+import { formatRelative } from "@/lib/adxc/format";
+import { orgMcpUrl } from "@/lib/adxc/mcp";
+import type { Realm } from "@/lib/adxc/types";
+
+type ProjectStats = { total: number; lastAskedAt: string | null } | null;
+
+async function load() {
+    const org = await getCurrentOrg();
+    const { realms } = await listRealms(org.org_id);
+    // One small call per project for its count and latest question. Fine at today's scale.
+    // TODO: ask Rob for question_count / last_asked_at on the realm list.
+    const stats = await Promise.all(
+        realms.map(async (r): Promise<ProjectStats> => {
+            try {
+                const page = await listRealmQueries(org.org_id, r.realm_id, { limit: 1 });
+                return { total: page.total, lastAskedAt: page.queries[0]?.asked_at ?? null };
+            } catch {
+                return null;
+            }
+        }),
+    );
+    const sorted = realms
+        .map((realm, i) => ({ realm, stats: stats[i] }))
+        .sort((a, b) => Number(b.realm.is_default) - Number(a.realm.is_default) || a.realm.name.localeCompare(b.realm.name));
+    return { org, projects: sorted };
+}
+
+export default async function ProjectsPage() {
+    let data: Awaited<ReturnType<typeof load>>;
+    try {
+        data = await load();
+    } catch (err) {
+        return <LoadError error={err} />;
+    }
+    const { org, projects } = data;
+    const defaultUrl = orgMcpUrl(org.slug);
+
     return (
-        <div className="mx-auto max-w-5xl space-y-2 px-4 py-8 md:px-8">
+        <div className="mx-auto max-w-5xl space-y-12 px-4 py-8 md:px-8">
+            <header className="space-y-1">
+                <h1>Projects</h1>
+                <p className="max-w-2xl text-sm text-muted-foreground">
+                    Keep work for each client apart. An answer bought in a project is free to everyone asking in it, and
+                    never visible from another project.
+                </p>
+            </header>
+
+            <section className="border bg-card p-5">
+                <CreateProjectForm />
+            </section>
+
+            <section className="space-y-3">
+                <h2 className="text-h4">All projects ({projects.length})</h2>
+                <ul className="space-y-4">
+                    {projects.map(({ realm, stats }) => (
+                        <ProjectCard key={realm.realm_id} realm={realm} stats={stats} defaultUrl={defaultUrl} />
+                    ))}
+                </ul>
+            </section>
+        </div>
+    );
+}
+
+function ProjectCard({ realm, stats, defaultUrl }: { realm: Realm; stats: ProjectStats; defaultUrl: string | null }) {
+    const href = `/questions?project=${encodeURIComponent(realm.realm_id)}`;
+    return (
+        <li className="space-y-4 border bg-card p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 space-y-0.5">
+                    <div className="flex items-center gap-2">
+                        <p className="truncate font-semibold text-foreground">{realm.name}</p>
+                        {realm.is_default && (
+                            <span className="inline-flex h-5 items-center rounded-xs border px-1.5 text-xs text-muted-foreground">
+                                Default
+                            </span>
+                        )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                        {stats === null
+                            ? "Question count unavailable"
+                            : stats.total === 0
+                              ? "No questions yet"
+                              : `${stats.total.toLocaleString("en-GB")} question${stats.total === 1 ? "" : "s"}${
+                                    stats.lastAskedAt ? ` · last asked ${formatRelative(stats.lastAskedAt)}` : ""
+                                }`}
+                    </p>
+                </div>
+                {stats !== null && stats.total > 0 && (
+                    <Link href={href} className="text-sm text-primary underline-offset-4 hover:underline">
+                        View questions
+                    </Link>
+                )}
+            </div>
+
+            <div className="space-y-2">
+                <p className="text-caption uppercase text-muted-foreground">Connect address</p>
+                {realm.is_default && defaultUrl ? (
+                    <CopyField value={defaultUrl} />
+                ) : (
+                    // TODO: wire up per-project addresses — waiting on Rob to return `mcp_url` on realms.
+                    <p className="border border-dashed px-3 py-2 text-sm text-muted-foreground">
+                        {realm.is_default ? "Not available yet." : "Each project will get its own address here soon."}
+                    </p>
+                )}
+            </div>
+        </li>
+    );
+}
+
+function LoadError({ error }: { error: unknown }) {
+    const message =
+        error instanceof AdxcApiError
+            ? `${error.status} — ${typeof error.detail === "string" ? error.detail : JSON.stringify(error.detail)}`
+            : String(error);
+    return (
+        <div className="mx-auto max-w-2xl space-y-2 px-4 py-8 md:px-8">
             <h1>Projects</h1>
-            <p className="text-sm text-muted-foreground">
-                Keep work for each client apart. Answers bought in a project are free to everyone in it.
-            </p>
+            <p className="text-sm text-muted-foreground">Couldn&apos;t load projects: {message}</p>
         </div>
     );
 }
