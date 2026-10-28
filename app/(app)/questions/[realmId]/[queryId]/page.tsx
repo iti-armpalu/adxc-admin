@@ -8,6 +8,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Download, Lock } from "lucide-react";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { CopyButton } from "@/components/copy-button";
 import { MarkdownText } from "@/components/markdown-text";
 import { SupplierList } from "@/components/question/supplier-card";
 import { StatusBadge } from "@/components/status-badge";
@@ -64,11 +65,14 @@ function latest(dates: (string | null | undefined)[]) {
     return valid.length ? valid[valid.length - 1] : null;
 }
 
-function SectionTitle({ title, note }: { title: string; note?: string }) {
+function SectionTitle({ title, note, action }: { title: string; note?: string; action?: React.ReactNode }) {
     return (
-        <div className="space-y-0.5">
-            <h2 className="text-h4">{title}</h2>
-            {note && <p className="text-sm text-muted-foreground">{note}</p>}
+        <div className="flex items-end justify-between gap-4">
+            <div className="space-y-0.5">
+                <h2 className="text-h4">{title}</h2>
+                {note && <p className="text-sm text-muted-foreground">{note}</p>}
+            </div>
+            {action}
         </div>
     );
 }
@@ -110,7 +114,7 @@ export default async function QuestionDetailPage({
                     <header className="space-y-4">
                         <div className="space-y-2 border-l-2 border-primary bg-card px-5 py-4 md:px-6 md:py-5">
                             <p className="text-caption uppercase text-muted-foreground">Question</p>
-                            <h1 className="text-lg leading-relaxed font-normal tracking-normal text-foreground md:text-xl">
+                            <h1 className="text-base leading-relaxed font-normal tracking-normal text-foreground">
                                 {q.question}
                             </h1>
                         </div>
@@ -129,6 +133,7 @@ export default async function QuestionDetailPage({
                             <SectionTitle
                                 title={paid ? "Answer" : "Preview"}
                                 note={paid ? undefined : "A shortened preview, free to read. The full answer unlocks when it's bought."}
+                                action={q.answer ? <CopyButton text={q.answer} label="Copy answer" /> : undefined}
                             />
                             <div className="border bg-card p-5 text-foreground-alt md:p-6">
                                 <MarkdownText text={q.answer ?? q.abstract ?? ""} />
