@@ -168,5 +168,17 @@ export const listClarifications = (orgId: string, realmId: string, queryId: stri
 /** Listing is free; the bytes behind each href need the answer to be paid. */
 export const listArtifacts = (orgId: string, realmId: string, queryId: string) =>
     get<QueryArtifact[]>(`${query(orgId, realmId, queryId)}/artifacts`);
-// TODO: wire up artifact downloads — a Route Handler that streams `href` with the bearer token,
-// since the browser can't call the API with the token directly.
+
+/**
+ * Fetch one artifact's bytes. `href` must be the exact path the artifacts listing gave
+ * (the extension is part of the file's identity). 403 until the answer is paid for.
+ * Used by /api/artifact, which streams it to the browser — the browser never holds the token.
+ */
+export async function fetchArtifact(href: string): Promise<Response> {
+    const res = await fetch(`${BASE}${href}`, {
+        headers: { Authorization: `Bearer ${await bearerToken()}` },
+        cache: "no-store",
+    });
+    if (!res.ok) throw new AdxcApiError(res.status, href);
+    return res;
+}

@@ -1,13 +1,15 @@
 // app/(app)/questions/[realmId]/[queryId]/page.tsx — Question detail
 //
-// A read-only record of one question: where it got to, what it would cost, who could
-// answer it and how well, and — if bought — the answer, its sources and files.
+// A read-only record of one question. The answer (or its free preview) leads; the facts
+// about it — status, project, cost, freshness, files — sit in a side column.
 // Buying, cancelling and answering clarifications happen in the agent that asked.
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Download, Lock } from "lucide-react";
 import { AutoRefresh } from "@/components/auto-refresh";
-import { SupplierCard } from "@/components/question/supplier-card";
+import { MarkdownText } from "@/components/markdown-text";
+import { SupplierList } from "@/components/question/supplier-card";
 import { StatusBadge } from "@/components/status-badge";
 import {
     AdxcApiError,
@@ -17,7 +19,7 @@ import {
     listArtifacts,
     listClarifications,
 } from "@/lib/adxc/client";
-import { formatDateTime, formatTokens } from "@/lib/adxc/format";
+import { formatDate, formatDateTime, formatTokens } from "@/lib/adxc/format";
 import { isRunning } from "@/lib/adxc/outcome";
 import type { QueryResult } from "@/lib/adxc/types";
 
@@ -38,22 +40,37 @@ async function load(realmId: string, queryId: string) {
     };
 }
 
-function explain(q: QueryResult) {
-    if (q.answer) return "Bought. The full answer is below and is free to everyone in this project.";
+/** One line on what the status means — only where the badge alone doesn't say enough. */
+function explain(q: QueryResult, paid: boolean): string | null {
+    if (paid) return null;
     switch (q.outcome) {
         case "pending":
             return "Still being worked on. This page updates on its own.";
         case "needs_input":
-            return "Paused until the person who asked answers a question about it in their agent.";
+            return "Paused until whoever asked answers a question about it in their agent.";
         case "quoted":
-            return "An answer is ready. Only the person or agent who asked can buy it.";
+            return "An answer is ready to buy. Only the person or agent who asked can buy it.";
         case "no_data":
-            return "The data suppliers were asked and had nothing for this question. Nothing was charged.";
+            return "The data suppliers had nothing for this question. Nothing was charged.";
         case "abandoned":
             return "Cancelled, or left waiting for input too long. Nothing was charged.";
         case "error":
             return "The run failed. Nothing was charged.";
     }
+}
+
+function latest(dates: (string | null | undefined)[]) {
+    const valid = dates.filter((d): d is string => Boolean(d)).sort();
+    return valid.length ? valid[valid.length - 1] : null;
+}
+
+function SectionTitle({ title, note }: { title: string; note?: string }) {
+    return (
+        <div className="space-y-0.5">
+            <h2 className="text-h4">{title}</h2>
+            {note && <p className="text-sm text-muted-foreground">{note}</p>}
+        </div>
+    );
 }
 
 export default async function QuestionDetailPage({
@@ -74,129 +91,161 @@ export default async function QuestionDetailPage({
     const paid = Boolean(q.answer);
     const suppliers = q.suppliers ?? [];
     const messages = q.messages ?? [];
+    const contributors = suppliers.filter((s) => s.status === "answered");
+    const dataAsOf = latest(contributors.map((s) => s.as_of));
+    const note = explain(q, paid);
+    const supplierName = (id: string) => suppliers.find((s) => s.supplier_id === id)?.display_name ?? id;
 
     return (
-        <div className="mx-auto max-w-5xl space-y-12 px-4 py-8 md:px-8">
+        <div className="mx-auto max-w-6xl space-y-10 px-4 py-8 md:px-8">
             {isRunning(q.outcome) && <AutoRefresh />}
 
-            <header className="space-y-4">
+            <header className="max-w-3xl space-y-3">
                 <Link href="/questions" className="text-sm text-primary underline-offset-4 hover:underline">
                     ← Questions
                 </Link>
-                <h1>{q.question}</h1>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
+                <p className="text-caption uppercase text-muted-foreground">Question</p>
+                <h1 className="text-h4 leading-snug md:text-h3">{q.question}</h1>
+                {/* On large screens these facts live in the side column. */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground lg:hidden">
                     <StatusBadge outcome={q.outcome} paid={paid} />
-                    {realmName && <span>Project: <span className="text-foreground">{realmName}</span></span>}
-                    {q.price && (
-                        <span>
-                            {paid ? "Cost" : "Price"}: <span className="text-foreground">{formatTokens(q.price)} credits</span>
-                        </span>
-                    )}
+                    {realmName && <span>{realmName}</span>}
+                    {q.price && <span>{formatTokens(q.price)} credits</span>}
                 </div>
-                <p className="text-sm text-foreground-alt">{explain(q)}</p>
+                {note && <p className="text-sm text-foreground-alt">{note}</p>}
                 {q.message && <p className="border bg-card p-4 text-sm text-foreground-alt">{q.message}</p>}
             </header>
 
-            {(q.answer || q.abstract) && (
-                <section className="space-y-3">
-                    <div>
-                        <h2>{paid ? "Answer" : "Preview"}</h2>
-                        {!paid && (
-                            <p className="text-sm text-muted-foreground">
-                                A shortened preview, free to read. The full answer unlocks when it&apos;s bought.
-                            </p>
+            <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start">
+                {/* Main column */}
+                <div className="min-w-0 space-y-10">
+                    {(q.answer || q.abstract) && (
+                        <section className="space-y-3">
+                            <SectionTitle
+                                title={paid ? "Answer" : "Preview"}
+                                note={paid ? undefined : "A shortened preview, free to read. The full answer unlocks when it's bought."}
+                            />
+                            <div className="border bg-card p-5 text-foreground-alt md:p-6">
+                                <MarkdownText text={q.answer ?? q.abstract ?? ""} />
+                            </div>
+                        </section>
+                    )}
+
+                    {suppliers.length > 0 && (
+                        <section className="space-y-3">
+                            <SectionTitle title="Data suppliers" note="Who was asked, and how much of the question each could cover." />
+                            <SupplierList suppliers={suppliers} />
+                        </section>
+                    )}
+
+                    {clarifications.length > 0 && (
+                        <section className="space-y-3">
+                            <SectionTitle title="Clarifications" note="What the run asked before answering, and what it was told." />
+                            <ul className="space-y-3">
+                                {clarifications.map((c) => (
+                                    <li key={c.clarification_id} className="space-y-2 border bg-card p-5 text-sm">
+                                        <p className="font-medium text-foreground">{c.clarification_text}</p>
+                                        <p className="text-muted-foreground">{c.context_text}</p>
+                                        {c.response ? (
+                                            <p className="text-foreground-alt">
+                                                Answered: <span className="text-foreground">{c.response}</span>
+                                                {c.responded_at && (
+                                                    <span className="text-muted-foreground"> · {formatDateTime(c.responded_at)}</span>
+                                                )}
+                                            </p>
+                                        ) : (
+                                            <p className="text-warning">Waiting for an answer. If none comes, it will assume: {c.suggestion}</p>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        </section>
+                    )}
+
+                    {messages.length > 0 && (
+                        <details className="border bg-card" open={isRunning(q.outcome)}>
+                            <summary className="flex cursor-pointer items-center justify-between px-5 py-4 text-sm">
+                                <span className="font-medium text-foreground">Activity log</span>
+                                <span className="text-muted-foreground">{messages.length} steps</span>
+                            </summary>
+                            <ol className="space-y-2 border-t px-5 py-4 text-sm">
+                                {messages.map((m) => (
+                                    <li key={m.seq} className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
+                                        {m.at && (
+                                            <span className="shrink-0 tabular-nums text-muted-foreground sm:w-40">
+                                                {formatDateTime(m.at)}
+                                            </span>
+                                        )}
+                                        <span className="text-foreground-alt">{m.text}</span>
+                                    </li>
+                                ))}
+                            </ol>
+                        </details>
+                    )}
+                </div>
+
+                {/* Side column */}
+                <aside className="space-y-6 lg:sticky lg:top-8">
+                    <dl className="divide-y border bg-card text-sm">
+                        <Fact label="Status"><StatusBadge outcome={q.outcome} paid={paid} /></Fact>
+                        {realmName && <Fact label="Project">{realmName}</Fact>}
+                        {q.price && <Fact label={paid ? "Cost" : "Price"}>{formatTokens(q.price)} credits</Fact>}
+                        {contributors.length > 0 && (
+                            <Fact label="Answered by">{contributors.map((s) => s.display_name).join(", ")}</Fact>
                         )}
-                    </div>
-                    <div className="border bg-card p-5 text-foreground whitespace-pre-line">{q.answer ?? q.abstract}</div>
-                </section>
-            )}
+                        {dataAsOf && <Fact label="Data as of">{formatDate(dataAsOf)}</Fact>}
+                    </dl>
 
-            {suppliers.length > 0 && (
-                <section className="space-y-3">
-                    <div>
-                        <h2>Data suppliers</h2>
-                        <p className="text-sm text-muted-foreground">Who was asked, and how much of the question each could cover.</p>
-                    </div>
-                    <ul className="space-y-4">
-                        {suppliers.map((s) => (
-                            <SupplierCard key={s.supplier_id} s={s} />
-                        ))}
-                    </ul>
-                </section>
-            )}
+                    {artifacts.length > 0 && (
+                        <section className="space-y-2">
+                            <p className="text-caption uppercase text-muted-foreground">Files</p>
+                            <ul className="divide-y border bg-card text-sm">
+                                {artifacts.map((a) => {
+                                    const body = (
+                                        <>
+                                            <div className="min-w-0">
+                                                <p className="truncate text-foreground">{a.name}</p>
+                                                <p className="truncate text-xs text-muted-foreground">
+                                                    {a.media_type} · {supplierName(a.supplier_id)}
+                                                </p>
+                                            </div>
+                                            {paid ? (
+                                                <Download className="size-4 shrink-0 text-primary" aria-label="Download" />
+                                            ) : (
+                                                <Lock className="size-4 shrink-0 text-muted-foreground" aria-label="Unlocks when bought" />
+                                            )}
+                                        </>
+                                    );
+                                    return (
+                                        <li key={a.href}>
+                                            {paid ? (
+                                                <a
+                                                    href={`/api/artifact?href=${encodeURIComponent(a.href)}`}
+                                                    className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-accent"
+                                                >
+                                                    {body}
+                                                </a>
+                                            ) : (
+                                                <div className="flex items-center justify-between gap-3 px-4 py-3">{body}</div>
+                                            )}
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                            {!paid && <p className="text-xs text-muted-foreground">Files unlock when the answer is bought.</p>}
+                        </section>
+                    )}
+                </aside>
+            </div>
+        </div>
+    );
+}
 
-            {artifacts.length > 0 && (
-                <section className="space-y-3">
-                    <div>
-                        <h2>Files</h2>
-                        <p className="text-sm text-muted-foreground">
-                            {paid ? "Data files that came with the answer." : "Included when the answer is bought."}
-                        </p>
-                    </div>
-                    <ul className="divide-y border bg-card">
-                        {artifacts.map((a) => (
-                            <li key={a.href} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
-                                <div className="min-w-0">
-                                    <p className="truncate text-foreground">{a.name}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {a.media_type} · {suppliers.find((s) => s.supplier_id === a.supplier_id)?.display_name ?? a.supplier_id}
-                                    </p>
-                                </div>
-                                {/* TODO: wire up download — a Route Handler that streams `a.href` with the bearer token. */}
-                                <span className="shrink-0 text-xs text-muted-foreground">{paid ? "Download soon" : "Locked"}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-            )}
-
-            {clarifications.length > 0 && (
-                <section className="space-y-3">
-                    <div>
-                        <h2>Clarifications</h2>
-                        <p className="text-sm text-muted-foreground">What the run asked before answering, and what it was told.</p>
-                    </div>
-                    <ul className="space-y-4">
-                        {clarifications.map((c) => (
-                            <li key={c.clarification_id} className="space-y-2 border bg-card p-5 text-sm">
-                                <p className="font-medium text-foreground">{c.clarification_text}</p>
-                                <p className="text-muted-foreground">{c.context_text}</p>
-                                {c.response ? (
-                                    <p className="text-foreground-alt">
-                                        Answered: <span className="text-foreground">{c.response}</span>
-                                        {c.responded_at && <span className="text-muted-foreground"> · {formatDateTime(c.responded_at)}</span>}
-                                    </p>
-                                ) : (
-                                    <p className="text-warning">
-                                        Waiting for an answer. If none comes, it will assume: {c.suggestion}
-                                    </p>
-                                )}
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-            )}
-
-            {messages.length > 0 && (
-                <section>
-                    <details className="border bg-card" open={isRunning(q.outcome)}>
-                        <summary className="cursor-pointer px-5 py-4">
-                            <h2 className="inline">Activity</h2>
-                            <span className="ml-2 text-sm text-muted-foreground">{messages.length} steps</span>
-                        </summary>
-                        <ol className="space-y-2 border-t px-5 py-4 text-sm">
-                            {messages.map((m) => (
-                                <li key={m.seq} className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
-                                    {m.at && (
-                                        <span className="shrink-0 tabular-nums text-muted-foreground sm:w-40">{formatDateTime(m.at)}</span>
-                                    )}
-                                    <span className="text-foreground-alt">{m.text}</span>
-                                </li>
-                            ))}
-                        </ol>
-                    </details>
-                </section>
-            )}
+function Fact({ label, children }: { label: string; children: React.ReactNode }) {
+    return (
+        <div className="flex items-start justify-between gap-4 px-4 py-3">
+            <dt className="shrink-0 text-muted-foreground">{label}</dt>
+            <dd className="text-right text-foreground">{children}</dd>
         </div>
     );
 }
@@ -212,7 +261,7 @@ function LoadError({ error }: { error: unknown }) {
             <Link href="/questions" className="text-sm text-primary underline-offset-4 hover:underline">
                 ← Questions
             </Link>
-            <h1>Question</h1>
+            <h1 className="text-h3">Question</h1>
             <p className="text-sm text-muted-foreground">
                 {forbidden
                     ? "This quote belongs to whoever asked it. Others can see it once it's bought."
