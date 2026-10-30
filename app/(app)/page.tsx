@@ -16,6 +16,8 @@ import type { OrgQueryListItem } from "@/lib/adxc/types";
 // 100 is the API's page maximum; older stuck items won't show here, but will on Questions.
 const SCAN_LIMIT = 100;
 const RECENT_COUNT = 5;
+const ATTENTION_COUNT = 5;
+const ATTENTION_HREF = "/questions?status=needs_input,quoted";
 
 const needsAttention = (q: OrgQueryListItem) => q.outcome === "needs_input" || (q.outcome === "quoted" && !q.paid);
 
@@ -38,7 +40,10 @@ export default async function OverviewPage() {
     }
     const { org, balance, realms, history } = data;
 
-    const attention = history.queries.filter(needsAttention);
+    // Waiting for input first: those get cancelled if left too long. Newest first within each.
+    const waiting = history.queries.filter((q) => q.outcome === "needs_input");
+    const toBuy = history.queries.filter((q) => needsAttention(q) && q.outcome !== "needs_input");
+    const attention = [...waiting, ...toBuy];
     const recent = history.queries.slice(0, RECENT_COUNT);
     const mcpUrl = orgMcpUrl(org.slug);
     const defaultRealm = realms.find((r) => r.is_default);
@@ -58,14 +63,27 @@ export default async function OverviewPage() {
 
             {attention.length > 0 && (
                 <section className="space-y-3">
-                    <div>
-                        <h2>Needs attention</h2>
-                        <p className="text-sm text-muted-foreground">
-                            Questions waiting for an answer or a decision to buy. Pick them up in the agent that asked.
-                        </p>
+                    <div className="flex items-end justify-between gap-4">
+                        <div className="space-y-0.5">
+                            <h2>Needs attention</h2>
+                            <p className="text-sm text-muted-foreground">
+                                {[
+                                    waiting.length && `${waiting.length} waiting for input`,
+                                    toBuy.length && `${toBuy.length} ready to buy`,
+                                ]
+                                    .filter(Boolean)
+                                    .join(" · ")}
+                                . Pick them up in the agent that asked.
+                            </p>
+                        </div>
+                        {attention.length > ATTENTION_COUNT && (
+                            <Link href={ATTENTION_HREF} className="shrink-0 text-sm text-primary underline-offset-4 hover:underline">
+                                View all {attention.length}
+                            </Link>
+                        )}
                     </div>
                     <ul className="divide-y border bg-card">
-                        {attention.map((q) => (
+                        {attention.slice(0, ATTENTION_COUNT).map((q) => (
                             <QuestionRow key={q.query_id} q={q} />
                         ))}
                     </ul>
