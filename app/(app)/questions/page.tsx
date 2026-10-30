@@ -9,14 +9,15 @@ import { QuestionFiltersBar } from "@/components/questions/question-filters";
 import { QuestionRow, questionHref } from "@/components/question-row";
 import { StatusBadge } from "@/components/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AdxcApiError, getCurrentOrg, listAskers, listOrgQueries, listRealms, isAuthError } from "@/lib/adxc/client";
+import { AdxcApiError, getCurrentOrg, listAskers, listRealms, isAuthError } from "@/lib/adxc/client";
 import { formatRelative, formatTokens } from "@/lib/adxc/format";
-import { parseFilters, rowStatus, toApiFilters, toSearch, type QuestionFilters } from "@/lib/adxc/question-filters";
+import { parseFilters, toSearch, type QuestionFilters } from "@/lib/adxc/question-filters";
+import { SCAN_CAP, findQuestions } from "@/lib/adxc/question-search";
 
 async function load(filters: QuestionFilters) {
     const org = await getCurrentOrg();
     const [history, realms, askers] = await Promise.all([
-        listOrgQueries(org.org_id, toApiFilters(filters)),
+        findQuestions(org.org_id, filters),
         listRealms(org.org_id),
         listAskers(org.org_id),
     ]);
@@ -38,9 +39,7 @@ export default async function QuestionsPage({
     }
     const { history, realms, askers } = data;
 
-    const rows = filters.status.length
-        ? history.queries.filter((q) => filters.status.includes(rowStatus(q)))
-        : history.queries;
+    const rows = history.rows;
 
     const projectOptions = realms.map((r) => ({ value: r.realm_id, label: r.name }));
     const askerOptions = askers.map((a) => ({
@@ -49,10 +48,10 @@ export default async function QuestionsPage({
     }));
 
     const first = history.total === 0 ? 0 : history.offset + 1;
-    const last = history.offset + history.queries.length;
+    const last = history.offset + rows.length;
     const hasPrev = filters.page > 1;
     const hasNext = last < history.total;
-    const anyFilter = Boolean(filters.project || filters.asker || filters.status.length);
+    const anyFilter = Boolean(filters.q || filters.project || filters.asker || filters.status.length);
 
     return (
         <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 md:px-8">
@@ -66,7 +65,9 @@ export default async function QuestionsPage({
             {rows.length === 0 ? (
                 <div className="border bg-card px-4 py-10 text-center text-sm text-muted-foreground">
                     {anyFilter
-                        ? "No questions match these filters."
+                        ? history.truncated
+                            ? `No matches in the latest ${SCAN_CAP} questions.`
+                            : "No questions match these filters."
                         : "No questions yet. Once an agent is connected, everything it asks shows up here."}
                 </div>
             ) : (
@@ -126,7 +127,7 @@ export default async function QuestionsPage({
                 <nav className="flex items-center justify-between gap-4 text-sm" aria-label="Pagination">
                     <p className="text-muted-foreground">
                         {first}–{last} of {history.total.toLocaleString("en-GB")}
-                        {filters.status.length > 0 && ` · status filter shows ${rows.length} on this page`}
+                        {history.truncated && ` · searched the latest ${SCAN_CAP} questions`}
                     </p>
                     <div className="flex gap-2">
                         <PageLink disabled={!hasPrev} href={`/questions${toSearch({ ...filters, page: filters.page - 1 })}`}>

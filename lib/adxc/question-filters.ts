@@ -1,9 +1,10 @@
 // lib/adxc/question-filters.ts
 //
 // Questions page filters live in the URL so a filtered view can be shared or bookmarked:
-//   ?project=<realm_id>&asker=m:42|k:17&status=quoted,bought&page=2
-// Project and asker filter on the server (API params). Status has no API filter, so it
-// narrows the page that was loaded — TODO: ask Rob for `?outcome=` on the queries list.
+//   ?q=coffee&project=<realm_id>&asker=m:42|k:17&status=quoted,bought&page=2
+// Project and asker are API params. Keyword and status have no API filter yet, so the
+// server scans recent questions instead (see question-search.ts).
+// TODO: ask Rob for `?q=` and `?outcome=` on the queries list.
 
 import type { OrgQueryFilters, OrgQueryListItem } from "./types";
 
@@ -21,6 +22,8 @@ export const STATUS_OPTIONS = [
 export type StatusFilter = (typeof STATUS_OPTIONS)[number]["value"];
 
 export type QuestionFilters = {
+    /** Keyword, matched case-insensitively against the question text. */
+    q: string | null;
     project: string | null;
     asker: string | null;
     status: StatusFilter[];
@@ -37,7 +40,9 @@ export function parseFilters(params: RawParams): QuestionFilters {
         .filter((s): s is StatusFilter => valid.has(s));
     const page = Math.max(1, Number.parseInt(one(params.page) ?? "1", 10) || 1);
     const asker = one(params.asker);
+    const q = (one(params.q) ?? "").trim().slice(0, 100);
     return {
+        q: q || null,
         project: one(params.project),
         asker: asker && /^[mk]:\d+$/.test(asker) ? asker : null,
         status,
@@ -62,6 +67,7 @@ export const rowStatus = (q: Pick<OrgQueryListItem, "outcome" | "paid">): Status
 
 export function toSearch(f: Partial<QuestionFilters>) {
     const qs = new URLSearchParams();
+    if (f.q) qs.set("q", f.q);
     if (f.project) qs.set("project", f.project);
     if (f.asker) qs.set("asker", f.asker);
     if (f.status?.length) qs.set("status", f.status.join(","));

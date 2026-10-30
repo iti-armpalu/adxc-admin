@@ -4,9 +4,10 @@
 // Active filters show as removable pills; "Clear all" appears at two or more.
 
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { ChevronDown, X } from "lucide-react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { ChevronDown, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
@@ -43,6 +44,7 @@ export function QuestionFiltersBar({
         apply({ status: on ? [...filters.status, value] : filters.status.filter((s) => s !== value) });
 
     const pills: { key: string; label: string; remove: () => void }[] = [];
+    if (filters.q) pills.push({ key: "q", label: `Search: “${filters.q}”`, remove: () => apply({ q: null }) });
     if (filters.project) {
         pills.push({
             key: "project",
@@ -67,6 +69,9 @@ export function QuestionFiltersBar({
 
     return (
         <div className={cn("space-y-3", pending && "opacity-60 transition-opacity")}>
+            {/* Keyed on the URL value so "Clear all" / removing the pill resets the box. */}
+            <KeywordSearch key={filters.q ?? ""} initial={filters.q ?? ""} onSearch={(q) => apply({ q: q || null })} />
+
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                 <Select value={filters.project ?? ALL} onValueChange={(v) => apply({ project: v === ALL ? null : v })}>
                     <SelectTrigger className={triggerClass} aria-label="Project">
@@ -136,7 +141,7 @@ export function QuestionFiltersBar({
                     {pills.length >= 2 && (
                         <button
                             type="button"
-                            onClick={() => apply({ project: null, asker: null, status: [] })}
+                            onClick={() => apply({ q: null, project: null, asker: null, status: [] })}
                             className="text-xs text-primary underline-offset-4 hover:underline"
                         >
                             Clear all
@@ -144,6 +149,37 @@ export function QuestionFiltersBar({
                     )}
                 </div>
             )}
+        </div>
+    );
+}
+
+// Searches as you type (after a short pause), so there's no button to press.
+function KeywordSearch({ initial, onSearch }: { initial: string; onSearch: (q: string) => void }) {
+    const [value, setValue] = useState(initial);
+    // Latest callback without restarting the debounce every time the parent re-renders.
+    const onSearchRef = useRef(onSearch);
+    useEffect(() => {
+        onSearchRef.current = onSearch;
+    }, [onSearch]);
+
+    useEffect(() => {
+        if (value.trim() === initial) return;
+        const id = setTimeout(() => onSearchRef.current(value.trim()), 400);
+        return () => clearTimeout(id);
+    }, [value, initial]);
+
+    return (
+        <div className="relative">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+                type="search"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                placeholder="Search questions"
+                aria-label="Search questions"
+                maxLength={100}
+                className="h-9 rounded-xs bg-card pl-9"
+            />
         </div>
     );
 }
