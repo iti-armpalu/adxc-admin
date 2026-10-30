@@ -4,6 +4,7 @@
 // right. Below lg only the form shows, with the logo above it.
 
 import { LoginBox } from "@/components/auth/login-box";
+import { GridGlow } from "@/components/grid-glow";
 import { safeNext } from "@/lib/auth/config";
 
 export const metadata = { title: "Sign in · ADXC" };
@@ -41,7 +42,8 @@ export default async function LoginPage({
     return (
         <main className="grid min-h-screen lg:grid-cols-2">
             {/* Brand panel */}
-            <section className="hidden flex-col justify-between bg-brand-700 p-12 text-white lg:flex xl:p-16">
+            <section className="relative isolate hidden flex-col justify-between overflow-hidden bg-brand-700 p-12 text-white lg:flex xl:p-16">
+                <GridGlow />
                 <Logo className="w-9" />
 
                 <div className="max-w-md space-y-10">

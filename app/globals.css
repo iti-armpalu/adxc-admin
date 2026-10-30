@@ -602,6 +602,57 @@
 }
 
 /* ============================================================
+   PROJECT UTILITIES
+   bg-grid / bg-grid-sm / bg-grid-lg
+   Dot-grid background pattern. Rectangular cells (wider than
+   tall). Colours via --grid-dot-color / --grid-line-color.
+   (From the ADXC design system globals.css, colours adapted.)
+   ============================================================ */
+@layer utilities {
+  .bg-grid {
+    --grid-w: 112px;
+    /* cell width  — wider for rectangular feel */
+    --grid-h: 64px;
+    /* cell height — shorter than width          */
+    --grid-dot: 4px;
+    /* brand-400. Plain rgb() with alpha instead of the DS's oklch(from var(...)) relative
+       colours: Next's CSS optimiser drops those, so the grid never rendered here. */
+    --grid-dot-color: rgb(207 111 148 / 0.9);
+    --grid-line-color: rgb(207 111 148 / 0.25);
+    background-image:
+      radial-gradient(circle, var(--grid-dot-color) var(--grid-dot), transparent calc(var(--grid-dot) + 1px)),
+      radial-gradient(circle, var(--grid-dot-color) var(--grid-dot), transparent calc(var(--grid-dot) + 1px)),
+      radial-gradient(circle, var(--grid-dot-color) var(--grid-dot), transparent calc(var(--grid-dot) + 1px)),
+      linear-gradient(to right, var(--grid-line-color) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line-color) 1px, transparent 1px);
+    background-size:
+      calc(var(--grid-w) * 5) calc(var(--grid-h) * 3),
+      calc(var(--grid-w) * 4) calc(var(--grid-h) * 6),
+      calc(var(--grid-w) * 7) calc(var(--grid-h) * 4),
+      var(--grid-w) var(--grid-h),
+      var(--grid-w) var(--grid-h);
+    background-position:
+      calc(var(--grid-w) * -0.5) calc(var(--grid-h) * 0.5),
+      calc(var(--grid-w) * -1.0) calc(var(--grid-h) * 1.0),
+      calc(var(--grid-w) * 0.5) calc(var(--grid-h) * -1.0),
+      0 0,
+      0 0;
+  }
+
+  .bg-grid-sm {
+    --grid-w: 80px;
+    --grid-h: 48px;
+    --grid-dot: 3px;
+  }
+
+  .bg-grid-lg {
+    --grid-w: 176px;
+    --grid-h: 96px;
+    --grid-dot: 6px;
+  }
+}
+
+/* ============================================================
    KEYFRAMES
    ============================================================ */
 
@@ -647,5 +698,20 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+/* Slow drift for decorative glows (sign-in brand panel). Transform only, so it stays on
+   the compositor and never triggers layout or paint. */
+@keyframes adxc-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(8%, -6%, 0) scale(1.08);
+  }
+
+  100% {
+    transform: translate3d(-6%, 8%, 0) scale(0.96);
   }
 }
