@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { MoreHorizontal } from "lucide-react";
 import { changeRole, removeMemberAction, type ActionResult } from "@/app/(app)/team/actions";
@@ -14,8 +15,20 @@ import {
 import { formatDate } from "@/lib/adxc/format";
 import type { OrgMember } from "@/lib/adxc/types";
 import { ConfirmDialog } from "./confirm-dialog";
+import { Avatar, RoleTag, Tag, roleLabel } from "./member-bits";
 
-const roleLabel = (r: OrgMember["role"]) => (r === "org_admin" ? "Admin" : "Member");
+
+function Identity({ m, isMe }: { m: OrgMember; isMe: boolean }) {
+    return (
+        <div className="flex min-w-0 items-center gap-3">
+            <Avatar email={m.email} />
+            <Link href={`/team/${m.member_id}`} className="min-w-0 break-all text-foreground hover:text-primary hover:underline underline-offset-4">
+                {m.email}
+            </Link>
+            {isMe && <Tag tone="neutral">You</Tag>}
+        </div>
+    );
+}
 
 export function MemberList({ members, myEmail }: { members: OrgMember[]; myEmail: string | null }) {
     const [pending, startTransition] = useTransition();
@@ -31,9 +44,7 @@ export function MemberList({ members, myEmail }: { members: OrgMember[]; myEmail
     };
 
     const actions = (m: OrgMember) =>
-        m.email === myEmail ? (
-            <span className="text-xs text-muted-foreground">You</span>
-        ) : (
+        m.email === myEmail ? null : (
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon-sm" className="rounded-xs" aria-label={`Actions for ${m.email}`} disabled={pending}>
@@ -63,12 +74,13 @@ export function MemberList({ members, myEmail }: { members: OrgMember[]; myEmail
             {/* Mobile: cards */}
             <ul className="divide-y border bg-card md:hidden">
                 {members.map((m) => (
-                    <li key={m.member_id} className="flex items-center justify-between gap-3 px-4 py-3">
-                        <div className="min-w-0">
-                            <p className="text-sm break-all text-foreground">{m.email}</p>
-                            <p className="text-xs text-muted-foreground">
-                                {roleLabel(m.role)} · joined {formatDate(m.created_at)}
-                            </p>
+                    <li key={m.member_id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+                        <div className="min-w-0 space-y-1.5">
+                            <Identity m={m} isMe={m.email === myEmail} />
+                            <div className="flex items-center gap-2 pl-11 text-xs text-muted-foreground">
+                                <RoleTag role={m.role} />
+                                <span>Joined {formatDate(m.created_at)}</span>
+                            </div>
                         </div>
                         {actions(m)}
                     </li>
@@ -80,7 +92,7 @@ export function MemberList({ members, myEmail }: { members: OrgMember[]; myEmail
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="border-b text-left text-muted-foreground">
-                            <th className="w-full px-4 py-2.5 font-medium">Email</th>
+                            <th className="w-full px-4 py-2.5 font-medium">Member</th>
                             <th className="px-4 py-2.5 font-medium">Role</th>
                             <th className="px-4 py-2.5 font-medium">Joined</th>
                             <th className="w-16 px-4 py-2.5" aria-label="Actions" />
@@ -89,8 +101,12 @@ export function MemberList({ members, myEmail }: { members: OrgMember[]; myEmail
                     <tbody className="divide-y">
                         {members.map((m) => (
                             <tr key={m.member_id}>
-                                <td className="px-4 py-3 break-all text-foreground">{m.email}</td>
-                                <td className="px-4 py-3 whitespace-nowrap text-foreground-alt">{roleLabel(m.role)}</td>
+                                <td className="px-4 py-3">
+                                    <Identity m={m} isMe={m.email === myEmail} />
+                                </td>
+                                <td className="px-4 py-3">
+                                    <RoleTag role={m.role} />
+                                </td>
                                 <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">{formatDate(m.created_at)}</td>
                                 <td className="px-4 py-2 text-right">{actions(m)}</td>
                             </tr>

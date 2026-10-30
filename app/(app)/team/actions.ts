@@ -52,6 +52,7 @@ export async function changeRole(memberId: number, role: Role): Promise<ActionRe
         const org = await getCurrentOrg();
         await setMemberRole(org.org_id, memberId, role);
         revalidatePath("/team");
+        revalidatePath("/team/[memberId]", "page");
         return { ok: true };
     } catch (err) {
         return { ok: false, error: friendly(err, "Couldn't change the role. Try again.") };
