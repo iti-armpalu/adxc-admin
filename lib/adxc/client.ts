@@ -4,11 +4,14 @@
 // Server Actions and Route Handlers — it reads secrets from the environment and
 // must never ship to the browser.
 //
-// Auth today: an org API key from ADXC_DEV_API_KEY (development only).
-// Auth later: the signed-in person's Stytch `session_jwt`. Only `bearerToken()`
-// changes when that lands — every function below stays the same.
+// Auth: the signed-in person's Stytch session JWT, read fresh from the cookie the Stytch
+// SDK writes on our domain (it refreshes every few minutes while a tab is open).
+// Development fallback: an org API key in ADXC_DEV_API_KEY, used only when nobody is
+// signed in, and never in production.
 
+import { cookies } from "next/headers";
 import { cache } from "react";
+import { JWT_COOKIE } from "@/lib/auth/config";
 import type {
     About,
     AddMemberRequest,
@@ -50,13 +53,17 @@ export class AdxcApiError extends Error {
 }
 
 async function bearerToken(): Promise<string> {
-    // TODO: wire up Stytch — read the session_jwt for the signed-in person here.
+    const jwt = (await cookies()).get(JWT_COOKIE)?.value;
+    if (jwt) return jwt;
+
     const devKey = process.env.ADXC_DEV_API_KEY;
     if (devKey && process.env.NODE_ENV !== "production") return devKey;
-    // Never fall back to a service key in production: anyone reaching the site
-    // would see the org's data with no sign-in.
-    throw new AdxcApiError(401, "(auth)", "No credential. Set ADXC_DEV_API_KEY in .env.local for development.");
+
+    throw new AdxcApiError(401, "(auth)", "Not signed in.");
 }
+
+/** The request had no valid credential: not signed in, or the 5-minute pass went stale. */
+export const isAuthError = (err: unknown) => err instanceof AdxcApiError && err.status === 401;
 
 type Query = Record<string, string | number | undefined | null>;
 

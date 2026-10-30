@@ -3,10 +3,11 @@
 // For the client's account owner landing in the panel: how much is left, is anything
 // stuck waiting on us, how do we connect an agent, and what has been asked lately.
 
+import { SessionRefresh } from "@/components/auth/session-refresh";
 import Link from "next/link";
 import { CopyField } from "@/components/copy-field";
 import { QuestionRow } from "@/components/question-row";
-import { AdxcApiError, getBalance, getCurrentOrg, listOrgQueries, listRealms } from "@/lib/adxc/client";
+import { AdxcApiError, getBalance, getCurrentOrg, listOrgQueries, listRealms, isAuthError } from "@/lib/adxc/client";
 import { formatTokens } from "@/lib/adxc/format";
 import { orgMcpUrl } from "@/lib/adxc/mcp";
 import type { OrgQueryListItem } from "@/lib/adxc/types";
@@ -134,6 +135,8 @@ function Stat({ label, value, note }: { label: string; value: string; note?: str
 }
 
 function ApiUnavailable({ error }: { error: unknown }) {
+    // Stale 5-minute pass: refresh it and re-render instead of showing an error.
+    if (isAuthError(error)) return <SessionRefresh />;
     const message =
         error instanceof AdxcApiError
             ? `${error.status} — ${typeof error.detail === "string" ? error.detail : JSON.stringify(error.detail)}`

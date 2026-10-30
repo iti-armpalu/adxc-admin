@@ -4,10 +4,11 @@
 // been asked in each, and how to point an agent at one. A bought answer is free to
 // everyone asking in the same project, and never visible from another.
 
+import { SessionRefresh } from "@/components/auth/session-refresh";
 import Link from "next/link";
 import { CopyField } from "@/components/copy-field";
 import { CreateProjectForm } from "@/components/projects/create-project-form";
-import { AdxcApiError, getCurrentOrg, listRealmQueries, listRealms } from "@/lib/adxc/client";
+import { AdxcApiError, getCurrentOrg, listRealmQueries, listRealms, isAuthError } from "@/lib/adxc/client";
 import { formatRelative } from "@/lib/adxc/format";
 import { orgMcpUrl } from "@/lib/adxc/mcp";
 import type { Realm } from "@/lib/adxc/types";
@@ -118,6 +119,8 @@ function ProjectCard({ realm, stats, defaultUrl }: { realm: Realm; stats: Projec
 }
 
 function LoadError({ error }: { error: unknown }) {
+    // Stale 5-minute pass: refresh it and re-render instead of showing an error.
+    if (isAuthError(error)) return <SessionRefresh />;
     const message =
         error instanceof AdxcApiError
             ? `${error.status} — ${typeof error.detail === "string" ? error.detail : JSON.stringify(error.detail)}`

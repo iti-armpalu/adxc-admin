@@ -3,12 +3,13 @@
 // For the account owner checking what has been asked on their account: by which person
 // or agent, for which client, what it cost, and where it ended up. Read-only.
 
+import { SessionRefresh } from "@/components/auth/session-refresh";
 import Link from "next/link";
 import { QuestionFiltersBar } from "@/components/questions/question-filters";
 import { QuestionRow, questionHref } from "@/components/question-row";
 import { StatusBadge } from "@/components/status-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AdxcApiError, getCurrentOrg, listAskers, listOrgQueries, listRealms } from "@/lib/adxc/client";
+import { AdxcApiError, getCurrentOrg, listAskers, listOrgQueries, listRealms, isAuthError } from "@/lib/adxc/client";
 import { formatRelative, formatTokens } from "@/lib/adxc/format";
 import { parseFilters, rowStatus, toApiFilters, toSearch, type QuestionFilters } from "@/lib/adxc/question-filters";
 
@@ -155,6 +156,8 @@ function PageLink({ href, disabled, children }: { href: string; disabled: boolea
 }
 
 function LoadError({ error }: { error: unknown }) {
+    // Stale 5-minute pass: refresh it and re-render instead of showing an error.
+    if (isAuthError(error)) return <SessionRefresh />;
     const message =
         error instanceof AdxcApiError
             ? `${error.status} — ${typeof error.detail === "string" ? error.detail : JSON.stringify(error.detail)}`

@@ -3,9 +3,10 @@
 // For the org admin: who can use ADXC on the account, who is still waiting to be let
 // in, and the keys their tools use. Admins only.
 
+import { SessionRefresh } from "@/components/auth/session-refresh";
 import { ApiKeys } from "@/components/team/api-keys";
 import { MembersPanel } from "@/components/team/members-panel";
-import { AdxcApiError } from "@/lib/adxc/client";
+import { AdxcApiError, isAuthError } from "@/lib/adxc/client";
 import { loadTeam, type TeamData } from "@/lib/adxc/team";
 
 export default async function TeamPage() {
@@ -49,6 +50,8 @@ export default async function TeamPage() {
 }
 
 function LoadError({ error }: { error: unknown }) {
+    // Stale 5-minute pass: refresh it and re-render instead of showing an error.
+    if (isAuthError(error)) return <SessionRefresh />;
     const forbidden = error instanceof AdxcApiError && error.status === 403;
     return (
         <div className="mx-auto max-w-2xl space-y-2 px-4 py-8 md:px-8">

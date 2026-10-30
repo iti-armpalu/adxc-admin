@@ -7,6 +7,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS } from "@/config/nav";
 import { cn } from "@/lib/utils";
+import { OrgSwitcher } from "./org-switcher";
+import { SignOutButton } from "./sign-out-button";
 
 export type ShellUser = { primary: string; secondary: string };
 
@@ -15,22 +17,22 @@ export type ShellData = {
     balance: string | null;
     user: ShellUser | null;
     isAdmin: boolean;
+    /** Signed in as a person (Stytch), not the dev API key. */
+    isPerson: boolean;
 };
 
 function isActive(pathname: string, href: string) {
     return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function SidebarContent({ orgName, balance, user, isAdmin, onNavigate }: ShellData & { onNavigate?: () => void }) {
+export function SidebarContent({ orgName, balance, user, isAdmin, isPerson, onNavigate }: ShellData & { onNavigate?: () => void }) {
     const pathname = usePathname();
     const items = NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin);
 
     return (
         <div className="flex h-full min-h-0 flex-col">
-            {/* TODO: wire up Stytch — turn this into the org switcher (session exchange between orgs). */}
             <div className="shrink-0 border-b border-sidebar-border px-4 py-4">
-                <p className="text-caption uppercase text-sidebar-muted">Organisation</p>
-                <p className="truncate font-medium text-foreground">{orgName ?? "—"}</p>
+                <OrgSwitcher orgName={orgName} />
             </div>
 
             <nav className="min-h-0 flex-1 overflow-y-auto px-2 py-3" aria-label="Main">
@@ -69,7 +71,7 @@ export function SidebarContent({ orgName, balance, user, isAdmin, onNavigate }: 
                         <p className="truncate text-xs text-sidebar-muted">{user.secondary}</p>
                     </div>
                 )}
-                {/* TODO: wire up Stytch — sign out. */}
+                {isPerson && <SignOutButton />}
             </div>
         </div>
     );

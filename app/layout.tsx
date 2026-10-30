@@ -1,6 +1,7 @@
 // app/layout.tsx
 import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
+import { StytchProvider } from "@/components/auth/stytch-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "@/app/globals.css";
 
@@ -22,9 +23,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={manrope.variable}>
       <body>
-        <TooltipProvider delayDuration={300}>
-          {children}
-        </TooltipProvider>
+        <StytchProvider>
+          <TooltipProvider delayDuration={300}>
+            {children}
+          </TooltipProvider>
+        </StytchProvider>
       </body>
     </html>
   );

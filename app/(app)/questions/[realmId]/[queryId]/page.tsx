@@ -4,6 +4,7 @@
 // about it — status, project, cost, freshness, files — sit in a side column.
 // Buying, cancelling and answering clarifications happen in the agent that asked.
 
+import { SessionRefresh } from "@/components/auth/session-refresh";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Download, Lock } from "lucide-react";
@@ -12,14 +13,7 @@ import { CopyButton } from "@/components/copy-button";
 import { MarkdownText } from "@/components/markdown-text";
 import { SupplierList } from "@/components/question/supplier-card";
 import { StatusBadge } from "@/components/status-badge";
-import {
-    AdxcApiError,
-    getCurrentOrg,
-    getQuery,
-    getRealm,
-    listArtifacts,
-    listClarifications,
-} from "@/lib/adxc/client";
+import { AdxcApiError, getCurrentOrg, getQuery, getRealm, listArtifacts, listClarifications, isAuthError } from "@/lib/adxc/client";
 import { formatDate, formatDateTime, formatTokens } from "@/lib/adxc/format";
 import { isRunning } from "@/lib/adxc/outcome";
 import type { QueryResult } from "@/lib/adxc/types";
@@ -271,6 +265,8 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 }
 
 function LoadError({ error }: { error: unknown }) {
+    // Stale 5-minute pass: refresh it and re-render instead of showing an error.
+    if (isAuthError(error)) return <SessionRefresh />;
     const forbidden = error instanceof AdxcApiError && error.status === 403;
     const message =
         error instanceof AdxcApiError
