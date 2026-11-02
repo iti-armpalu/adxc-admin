@@ -64,7 +64,7 @@ export default async function OverviewPage() {
             {attention.length > 0 && (
                 <section className="space-y-3">
                     <div className="flex items-end justify-between gap-4">
-                        <div className="space-y-0.5">
+                        <div className="space-y-1">
                             <h2>Needs attention</h2>
                             <p className="text-sm text-muted-foreground">
                                 {[
@@ -91,7 +91,7 @@ export default async function OverviewPage() {
             )}
 
             <section className="space-y-3">
-                <div>
+                <div className="space-y-1">
                     <h2>Connect an agent</h2>
                     <p className="text-sm text-muted-foreground">
                         Paste this address into your agent&apos;s MCP or connector settings. Only members of{" "}
