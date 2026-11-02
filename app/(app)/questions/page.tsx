@@ -54,7 +54,7 @@ export default async function QuestionsPage({
     const anyFilter = Boolean(filters.q || filters.project || filters.asker || filters.status.length);
 
     return (
-        <div className="mx-auto max-w-6xl space-y-8 px-4 py-8 md:px-8">
+        <div className="animate-[adxc-fade_400ms_ease-out_both] motion-reduce:animate-none mx-auto max-w-6xl space-y-8 px-4 py-8 md:px-8">
             <header className="space-y-1">
                 <h1>Questions</h1>
                 <p className="text-sm text-muted-foreground">Everything asked on your account, by people and agents.</p>
@@ -164,7 +164,7 @@ function LoadError({ error }: { error: unknown }) {
             ? `${error.status} — ${typeof error.detail === "string" ? error.detail : JSON.stringify(error.detail)}`
             : String(error);
     return (
-        <div className="mx-auto max-w-2xl space-y-2 px-4 py-8 md:px-8">
+        <div className="animate-[adxc-fade_400ms_ease-out_both] motion-reduce:animate-none mx-auto max-w-2xl space-y-2 px-4 py-8 md:px-8">
             <h1>Questions</h1>
             <p className="text-sm text-muted-foreground">Couldn&apos;t load questions: {message}</p>
         </div>

@@ -708,10 +708,10 @@
   }
 
   50% {
-    transform: translate3d(8%, -6%, 0) scale(1.08);
+    transform: translate3d(22%, -14%, 0) scale(1.15);
   }
 
   100% {
-    transform: translate3d(-6%, 8%, 0) scale(0.96);
+    transform: translate3d(-12%, 20%, 0) scale(0.92);
   }
 }

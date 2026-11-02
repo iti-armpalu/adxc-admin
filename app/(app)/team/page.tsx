@@ -19,7 +19,7 @@ export default async function TeamPage() {
     const { mode, myEmail, members, notAdmitted, keys } = data;
 
     return (
-        <div className="mx-auto max-w-5xl space-y-12 px-4 py-8 md:px-8">
+        <div className="animate-[adxc-fade_400ms_ease-out_both] motion-reduce:animate-none mx-auto max-w-5xl space-y-12 px-4 py-8 md:px-8">
             <header className="space-y-1">
                 <h1>Team</h1>
                 <p className="text-sm text-muted-foreground">Who can use ADXC on your account, and the keys your tools use.</p>
@@ -54,7 +54,7 @@ function LoadError({ error }: { error: unknown }) {
     if (isAuthError(error)) return <SessionRefresh />;
     const forbidden = error instanceof AdxcApiError && error.status === 403;
     return (
-        <div className="mx-auto max-w-2xl space-y-2 px-4 py-8 md:px-8">
+        <div className="animate-[adxc-fade_400ms_ease-out_both] motion-reduce:animate-none mx-auto max-w-2xl space-y-2 px-4 py-8 md:px-8">
             <h1>Team</h1>
             <p className="text-sm text-muted-foreground">
                 {forbidden ? "Only organisation admins can manage the team." : "Couldn't load the team. Try again."}

@@ -13,6 +13,8 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "ADXC",
   description: "Premium data. Pay as you go.",
+  // Private client panel: keep every page (including sign-in) out of search results.
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({

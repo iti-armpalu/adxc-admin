@@ -95,7 +95,7 @@ export default async function QuestionDetailPage({
     const supplierName = (id: string) => suppliers.find((s) => s.supplier_id === id)?.display_name ?? id;
 
     return (
-        <div className="mx-auto max-w-6xl space-y-6 px-4 py-8 md:px-8">
+        <div className="animate-[adxc-fade_400ms_ease-out_both] motion-reduce:animate-none mx-auto max-w-6xl space-y-6 px-4 py-8 md:px-8">
             {isRunning(q.outcome) && <AutoRefresh />}
 
             <Link href="/questions" className="inline-flex items-center gap-1.5 text-sm text-primary underline-offset-4 hover:underline">
@@ -273,7 +273,7 @@ function LoadError({ error }: { error: unknown }) {
             ? `${error.status} — ${typeof error.detail === "string" ? error.detail : JSON.stringify(error.detail)}`
             : String(error);
     return (
-        <div className="mx-auto max-w-2xl space-y-3 px-4 py-8 md:px-8">
+        <div className="animate-[adxc-fade_400ms_ease-out_both] motion-reduce:animate-none mx-auto max-w-2xl space-y-3 px-4 py-8 md:px-8">
             <Link href="/questions" className="inline-flex items-center gap-1.5 text-sm text-primary underline-offset-4 hover:underline">
                 <ArrowLeft className="size-4" />
                 Questions

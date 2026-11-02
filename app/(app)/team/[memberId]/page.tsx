@@ -51,7 +51,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ m
     const partial = history ? history.total > rows.length : false;
 
     return (
-        <div className="mx-auto max-w-5xl space-y-10 px-4 py-8 md:px-8">
+        <div className="animate-[adxc-fade_400ms_ease-out_both] motion-reduce:animate-none mx-auto max-w-5xl space-y-10 px-4 py-8 md:px-8">
             <Link href="/team" className="inline-flex items-center gap-1.5 text-sm text-primary underline-offset-4 hover:underline">
                 <ArrowLeft className="size-4" />
                 Team
@@ -125,7 +125,7 @@ function LoadError({ error }: { error: unknown }) {
     if (isAuthError(error)) return <SessionRefresh />;
     const forbidden = error instanceof AdxcApiError && error.status === 403;
     return (
-        <div className="mx-auto max-w-2xl space-y-2 px-4 py-8 md:px-8">
+        <div className="animate-[adxc-fade_400ms_ease-out_both] motion-reduce:animate-none mx-auto max-w-2xl space-y-2 px-4 py-8 md:px-8">
             <h1 className="text-h3">Member</h1>
             <p className="text-sm text-muted-foreground">
                 {forbidden ? "Only organisation admins can see team members." : "Couldn't load this member. Try again."}

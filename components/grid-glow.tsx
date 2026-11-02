@@ -7,8 +7,8 @@
 export function GridGlow() {
     return (
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-            <div className="absolute -top-1/4 -left-1/4 size-[42rem] rounded-full bg-brand-500/35 blur-3xl will-change-transform animate-[adxc-drift_28s_ease-in-out_infinite_alternate] motion-reduce:animate-none" />
-            <div className="absolute -right-1/4 -bottom-1/3 size-[36rem] rounded-full bg-brand-900/70 blur-3xl will-change-transform animate-[adxc-drift_34s_ease-in-out_infinite_alternate-reverse] motion-reduce:animate-none" />
+            <div className="absolute -top-1/4 -left-1/4 size-[42rem] rounded-full bg-brand-500/35 blur-3xl will-change-transform animate-[adxc-drift_18s_ease-in-out_infinite_alternate] motion-reduce:animate-none" />
+            <div className="absolute -right-1/4 -bottom-1/3 size-[36rem] rounded-full bg-brand-900/70 blur-3xl will-change-transform animate-[adxc-drift_22s_ease-in-out_infinite_alternate-reverse] motion-reduce:animate-none" />
             <div
                 className="absolute inset-0 bg-grid opacity-20"
                 style={{
