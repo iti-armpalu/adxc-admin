@@ -75,7 +75,7 @@ export type ApiKeyList = { keys: ApiKeyRecord[] };
 /** POST /v3/org/{org_id}/api-keys — the only response that ever carries the raw token. */
 export type CreatedApiKey = ApiKeyRecord & { raw_token: string };
 
-// ── Realms (shown to clients as "Projects") ────────────────────────────────
+// ── Realms (also called "Realms" in the panel) ────────────────────────────────
 
 export type Realm = {
     realm_id: string;

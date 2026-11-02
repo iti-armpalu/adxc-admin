@@ -2,7 +2,7 @@
 
 // The org name at the top of the sidebar. For a signed-in person it opens a list of the
 // organisations they belong to; picking one swaps the Stytch session to that org and
-// reloads the panel (projects, questions and members all belong to one org).
+// reloads the panel (realms, questions and members all belong to one org).
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";

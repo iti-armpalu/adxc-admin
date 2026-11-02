@@ -58,7 +58,7 @@ export default async function OverviewPage() {
             <section className="grid gap-4 sm:grid-cols-3" aria-label="Summary">
                 <Stat label="Credits" value={formatTokens(balance.balance)} note="Charged only when an answer is bought." />
                 <Stat label="Questions asked" value={history.total.toLocaleString("en-GB")} />
-                <Stat label="Projects" value={realms.length.toLocaleString("en-GB")} />
+                <Stat label="Realms" value={realms.length.toLocaleString("en-GB")} />
             </section>
 
             {attention.length > 0 && (
@@ -107,10 +107,10 @@ export default async function OverviewPage() {
                         <p className="text-sm text-muted-foreground">Your connect address isn&apos;t available yet.</p>
                     )}
                     <p className="text-sm text-foreground-alt">
-                        Questions asked here go to {defaultRealm ? <span className="font-semibold text-foreground">{defaultRealm.name}</span> : "your default project"}.
-                        To keep work for different clients apart, give each one its own project and address on{" "}
-                        <Link href="/projects" className="text-primary underline-offset-4 hover:underline">
-                            Projects
+                        Questions asked here go to {defaultRealm ? <span className="font-semibold text-foreground">{defaultRealm.name}</span> : "your default realm"}.
+                        To keep work for different clients apart, give each one its own realm and address on{" "}
+                        <Link href="/realms" className="text-primary underline-offset-4 hover:underline">
+                            Realms
                         </Link>
                         .
                     </p>

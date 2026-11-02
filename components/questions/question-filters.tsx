@@ -1,6 +1,6 @@
 "use client";
 
-// Project and "asked by" are single-choice (the API takes one of each); status is multi-select.
+// Realm and "asked by" are single-choice (the API takes one of each); status is multi-select.
 // Active filters show as removable pills; "Clear all" appears at two or more.
 
 import { useRouter } from "next/navigation";
@@ -26,11 +26,11 @@ const menuClass = "rounded-none bg-card text-card-foreground";
 
 export function QuestionFiltersBar({
     filters,
-    projects,
+    realms,
     askers,
 }: {
     filters: QuestionFilters;
-    projects: Option[];
+    realms: Option[];
     askers: Option[];
 }) {
     const router = useRouter();
@@ -45,11 +45,11 @@ export function QuestionFiltersBar({
 
     const pills: { key: string; label: string; remove: () => void }[] = [];
     if (filters.q) pills.push({ key: "q", label: `Search: “${filters.q}”`, remove: () => apply({ q: null }) });
-    if (filters.project) {
+    if (filters.realm) {
         pills.push({
-            key: "project",
-            label: `Project: ${projects.find((p) => p.value === filters.project)?.label ?? "Unknown"}`,
-            remove: () => apply({ project: null }),
+            key: "realm",
+            label: `Realm: ${realms.find((p) => p.value === filters.realm)?.label ?? "Unknown"}`,
+            remove: () => apply({ realm: null }),
         });
     }
     if (filters.asker) {
@@ -73,13 +73,13 @@ export function QuestionFiltersBar({
             <KeywordSearch key={filters.q ?? ""} initial={filters.q ?? ""} onSearch={(q) => apply({ q: q || null })} />
 
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                <Select value={filters.project ?? ALL} onValueChange={(v) => apply({ project: v === ALL ? null : v })}>
-                    <SelectTrigger className={triggerClass} aria-label="Project">
-                        <SelectValue placeholder="All projects" />
+                <Select value={filters.realm ?? ALL} onValueChange={(v) => apply({ realm: v === ALL ? null : v })}>
+                    <SelectTrigger className={triggerClass} aria-label="Realm">
+                        <SelectValue placeholder="All realms" />
                     </SelectTrigger>
                     <SelectContent className={menuClass} position="popper">
-                        <SelectItem value={ALL}>All projects</SelectItem>
-                        {projects.map((p) => (
+                        <SelectItem value={ALL}>All realms</SelectItem>
+                        {realms.map((p) => (
                             <SelectItem key={p.value} value={p.value}>
                                 {p.label}
                             </SelectItem>
@@ -141,7 +141,7 @@ export function QuestionFiltersBar({
                     {pills.length >= 2 && (
                         <button
                             type="button"
-                            onClick={() => apply({ q: null, project: null, asker: null, status: [] })}
+                            onClick={() => apply({ q: null, realm: null, asker: null, status: [] })}
                             className="text-xs text-primary underline-offset-4 hover:underline"
                         >
                             Clear all

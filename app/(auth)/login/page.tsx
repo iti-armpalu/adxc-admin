@@ -20,7 +20,7 @@ const POINTS = [
     },
     {
         title: "Keep each client's work apart",
-        body: "Projects keep answers separate, and anything bought is free to reuse inside its project.",
+        body: "Realms keep answers separate, and anything bought is free to reuse inside its realm.",
     },
 ];
 

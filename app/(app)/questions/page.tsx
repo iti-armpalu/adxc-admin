@@ -41,7 +41,7 @@ export default async function QuestionsPage({
 
     const rows = history.rows;
 
-    const projectOptions = realms.map((r) => ({ value: r.realm_id, label: r.name }));
+    const realmOptions = realms.map((r) => ({ value: r.realm_id, label: r.name }));
     const askerOptions = askers.map((a) => ({
         value: a.member_id !== null ? `m:${a.member_id}` : `k:${a.api_key_id}`,
         label: a.kind === "org_automation" ? `${a.name} (API key)` : a.name,
@@ -51,7 +51,7 @@ export default async function QuestionsPage({
     const last = history.offset + rows.length;
     const hasPrev = filters.page > 1;
     const hasNext = last < history.total;
-    const anyFilter = Boolean(filters.q || filters.project || filters.asker || filters.status.length);
+    const anyFilter = Boolean(filters.q || filters.realm || filters.asker || filters.status.length);
 
     return (
         <div className="animate-[adxc-fade_400ms_ease-out_both] motion-reduce:animate-none mx-auto max-w-6xl space-y-8 px-4 py-8 md:px-8">
@@ -60,7 +60,7 @@ export default async function QuestionsPage({
                 <p className="text-sm text-muted-foreground">Everything asked on your account, by people and agents.</p>
             </header>
 
-            <QuestionFiltersBar filters={filters} projects={projectOptions} askers={askerOptions} />
+            <QuestionFiltersBar filters={filters} realms={realmOptions} askers={askerOptions} />
 
             {rows.length === 0 ? (
                 <div className="border bg-card px-4 py-10 text-center text-sm text-muted-foreground">
@@ -86,7 +86,7 @@ export default async function QuestionsPage({
                                 <TableRow>
                                     <TableHead className="w-[40%]">Question</TableHead>
                                     <TableHead>Status</TableHead>
-                                    <TableHead>Project</TableHead>
+                                    <TableHead>Realm</TableHead>
                                     <TableHead>Asked by</TableHead>
                                     <TableHead className="text-right">Price</TableHead>
                                     <TableHead className="text-right">Asked</TableHead>

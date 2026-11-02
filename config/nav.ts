@@ -5,6 +5,6 @@ export type NavItem = { label: string; href: string; adminOnly?: boolean };
 export const NAV_ITEMS: NavItem[] = [
     { label: "Overview", href: "/" },
     { label: "Questions", href: "/questions" },
-    { label: "Projects", href: "/projects" },
+    { label: "Realms", href: "/realms" },
     { label: "Team", href: "/team", adminOnly: true },
 ];

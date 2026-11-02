@@ -1,7 +1,7 @@
 // app/(app)/questions/[realmId]/[queryId]/page.tsx — Question detail
 //
 // A read-only record of one question. The answer (or its free preview) leads; the facts
-// about it — status, project, cost, freshness, files — sit in a side column.
+// about it — status, realm, cost, freshness, files — sit in a side column.
 // Buying, cancelling and answering clarifications happen in the agent that asked.
 
 import { SessionRefresh } from "@/components/auth/session-refresh";
@@ -201,7 +201,7 @@ export default async function QuestionDetailPage({
                     <p className="text-caption uppercase text-muted-foreground">Details</p>
                     <dl className="divide-y border bg-card text-sm">
                         <Fact label="Status"><StatusBadge outcome={q.outcome} paid={paid} /></Fact>
-                        {realmName && <Fact label="Project">{realmName}</Fact>}
+                        {realmName && <Fact label="Realm">{realmName}</Fact>}
                         {q.price && <Fact label={paid ? "Cost" : "Price"}>{formatTokens(q.price)} credits</Fact>}
                         {contributors.length > 0 && (
                             <Fact label="Answered by">{contributors.map((s) => s.display_name).join(", ")}</Fact>

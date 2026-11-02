@@ -2,7 +2,7 @@
 //
 // Finds the page of questions to show. Without a keyword or status filter it's one API
 // call, paged by the API. With either, the API can't filter, so we fetch the newest
-// SCAN_CAP questions (honouring project/asker), filter them here and page the matches.
+// SCAN_CAP questions (honouring realm/asker), filter them here and page the matches.
 // When Rob adds `q` / `outcome` params, swap the scan for a direct call — callers don't change.
 
 import { listOrgQueries } from "./client";
