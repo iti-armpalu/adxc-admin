@@ -2,13 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { AdxcApiError, createRealm, getCurrentOrg } from "@/lib/adxc/client";
+import { realmNameError } from "@/lib/adxc/realm-name";
 
 export type CreateRealmState = { error: string | null; created: string | null };
 
 export async function createRealmAction(_prev: CreateRealmState, formData: FormData): Promise<CreateRealmState> {
     const name = String(formData.get("name") ?? "").trim();
-    if (!name) return { error: "Give the realm a name.", created: null };
-    if (name.length > 120) return { error: "Keep the name under 120 characters.", created: null };
+    // Checked again here: the form's live check can be bypassed.
+    const invalid = realmNameError(name);
+    if (invalid) return { error: invalid, created: null };
 
     try {
         const org = await getCurrentOrg();
