@@ -1,17 +1,19 @@
 "use client";
 
 // Stytch's sign-in box, set up the way Rob specified:
-//   Discovery flow · email code only · sessions of SESSION_MINUTES · no "Create an organization".
+//   Discovery flow · email code or SSO · sessions of SESSION_MINUTES · no "Create an organization".
+// SSO sends people to their company's login (e.g. Google) and back to /login on this site,
+// where the box finishes signing them in. Rob must allow that address as an SSO redirect URL.
 // Themed with the ADXC design tokens. Once Stytch confirms a session, go to the panel.
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { AuthFlowType, B2BProducts, StytchB2B, shadcnTheme, useStytchMemberSession } from "@stytch/nextjs/b2b";
 import { SESSION_MINUTES } from "@/lib/auth/config";
 
-const config = {
+const baseConfig = {
     authFlowType: AuthFlowType.Discovery,
-    products: [B2BProducts.emailOtp],
+    products: [B2BProducts.emailOtp, B2BProducts.sso],
     sessionOptions: { sessionDurationMinutes: SESSION_MINUTES },
     disableCreateOrganization: true,
     // Most people belong to one org: skip the picker for them.
@@ -45,6 +47,12 @@ const strings = {
 export function LoginBox({ next }: { next: string }) {
     const router = useRouter();
     const { session, isInitialized, fromCache } = useStytchMemberSession();
+
+    // SSO must return to this site (app.adxc.ai, the Vercel URL or localhost), not Stytch's default.
+    const config = useMemo(() => {
+        const returnTo = typeof window === "undefined" ? undefined : `${window.location.origin}/login`;
+        return { ...baseConfig, ssoOptions: { loginRedirectURL: returnTo, signupRedirectURL: returnTo } };
+    }, []);
 
     useEffect(() => {
         // Wait for a confirmed (not cached) session so a stale cookie can't bounce us around.
