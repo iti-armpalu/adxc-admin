@@ -1,7 +1,7 @@
 // app/(auth)/login/page.tsx — sign in with an email code (Stytch).
 //
-// Split layout from lg up: brand panel with a short pitch on the left, the form on the
-// right. Below lg only the form shows, with the logo above it.
+// Split layout from lg up (50/50): brand panel on the left — logo top, headline centred,
+// data-partner strip at the bottom — and the form on the right. Below lg only the form shows.
 
 import { LoginBox } from "@/components/auth/login-box";
 import { GridGlow } from "@/components/grid-glow";
@@ -9,19 +9,13 @@ import { safeNext } from "@/lib/auth/config";
 
 export const metadata = { title: "Sign in · ADXC" };
 
-const POINTS = [
-    {
-        title: "See everything your agents ask",
-        body: "Every question asked on your account, by people and AI agents, in one place.",
-    },
-    {
-        title: "Know the price before you pay",
-        body: "Each answer is quoted with a free preview first. You're only charged when it's bought.",
-    },
-    {
-        title: "Keep each client's work apart",
-        body: "Realms keep answers separate, and anything bought is free to reuse inside its realm.",
-    },
+// Monitoring/testing mode: copy avoids spend, credits and billing.
+// TODO: wire up partner logos — add official white/mono SVGs to /public/logos and set `src`.
+// Until then each partner shows as a text wordmark.
+const PARTNERS: { name: string; src?: string }[] = [
+    { name: "YouGov" },
+    { name: "Quid" },
+    { name: "Serpstat" },
 ];
 
 function Logo({ className }: { className?: string }) {
@@ -41,27 +35,35 @@ export default async function LoginPage({
 
     return (
         <main className="grid min-h-screen lg:grid-cols-2">
-            {/* Brand panel */}
-            <section className="relative isolate hidden flex-col justify-between overflow-hidden bg-brand-700 p-12 text-white lg:flex xl:p-16">
+            {/* Brand panel (lg+ only) */}
+            <section className="relative isolate hidden flex-col justify-between overflow-hidden bg-brand-700 p-12 text-white lg:flex">
                 <GridGlow />
                 <Logo className="w-9" />
 
-                <div className="max-w-md space-y-10">
-                    <div className="space-y-4">
-                        <p className="text-caption uppercase text-brand-200">ADXC client panel</p>
-                        <h2 className="text-h2 text-white">Premium consumer data, answered for your AI agents.</h2>
-                    </div>
-                    <ul className="space-y-6">
-                        {POINTS.map((p) => (
-                            <li key={p.title} className="border-l-2 border-brand-400 pl-4">
-                                <p className="font-medium text-white">{p.title}</p>
-                                <p className="text-sm text-brand-100">{p.body}</p>
-                            </li>
-                        ))}
-                    </ul>
+                <div className="max-w-[480px] space-y-4">
+                    <h2 className="text-h1 text-white">
+                        <span className="block">Data you can rely on</span>
+                        <span className="block">for big decisions</span>
+                    </h2>
+                    <p className="text-brand-100">Monitor queries, answers and activity across ADXC.</p>
                 </div>
 
-                <p className="text-xs text-brand-200">© {new Date().getFullYear()} ADXC</p>
+                <div className="space-y-3">
+                    <p className="text-caption uppercase text-brand-200">Answers from</p>
+                    <ul className="flex flex-wrap items-center gap-x-8 gap-y-3">
+                        {PARTNERS.map((p) => (
+                            <li key={p.name}>
+                                {p.src ? (
+                                    // eslint-disable-next-line @next/next/no-img-element -- SVG: plain img by convention
+                                    <img src={p.src} alt={p.name} className="h-6 w-auto" />
+                                ) : (
+                                    <span className="text-lg font-semibold tracking-tight text-white/90">{p.name}</span>
+                                )}
+                            </li>
+                        ))}
+                        <li className="text-sm text-brand-200">More coming soon</li>
+                    </ul>
+                </div>
             </section>
 
             {/* Form */}
@@ -77,6 +79,9 @@ export default async function LoginPage({
                     <div className="border bg-card">
                         <LoginBox next={next} />
                     </div>
+                    <p className="text-center text-sm text-muted-foreground">
+                        Need access? Contact your ADXC account manager.
+                    </p>
                 </div>
             </section>
         </main>
