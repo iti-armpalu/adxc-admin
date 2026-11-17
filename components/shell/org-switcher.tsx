@@ -7,7 +7,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ChevronsUpDown } from "lucide-react";
-import { useStytchB2BClient, useStytchMemberSession } from "@stytch/nextjs/b2b";
+import { useStytchB2BClient, useStytchMember, useStytchMemberSession } from "@stytch/nextjs/b2b";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -16,12 +16,16 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SESSION_MINUTES } from "@/lib/auth/config";
+import { VerifyOrgDialog, type OrgTarget } from "./verify-org-dialog";
 
 type OrgOption = { id: string; name: string };
 
 export function OrgSwitcher({ orgName }: { orgName: string | null }) {
     const stytch = useStytchB2BClient();
     const { session } = useStytchMemberSession();
+    const { member } = useStytchMember();
+    // Org that needs an email code before we can switch into it.
+    const [verifying, setVerifying] = useState<OrgTarget | null>(null);
     const router = useRouter();
     const [orgs, setOrgs] = useState<OrgOption[] | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -53,6 +57,7 @@ export function OrgSwitcher({ orgName }: { orgName: string | null }) {
 
     function switchTo(id: string) {
         if (id === session?.organization_id) return;
+        const target = orgs?.find((o) => o.id === id);
         setError(null);
         startTransition(async () => {
             try {
@@ -64,13 +69,26 @@ export function OrgSwitcher({ orgName }: { orgName: string | null }) {
                 }
                 router.push("/");
                 router.refresh();
-            } catch {
+            } catch (err) {
+                // This org doesn't accept how you signed in (e.g. another org's SSO): verify by email code.
+                const type = (err as { error_type?: string } | null)?.error_type;
+                if (type === "operation_restricted_by_organization_auth_methods" && target && member?.email_address) {
+                    try {
+                        await stytch.otps.email.discovery.send({ email_address: member.email_address });
+                        setVerifying(target);
+                        return;
+                    } catch {
+                        // fall through to the generic message
+                    }
+                }
                 setError("Couldn't switch organisation. Try again.");
             }
         });
     }
 
     return (
+        <>
+        <VerifyOrgDialog target={verifying} email={member?.email_address ?? ""} onClose={() => setVerifying(null)} />
         <DropdownMenu onOpenChange={(open) => open && load()}>
             <DropdownMenuTrigger
                 className="flex w-full min-w-0 items-center justify-between gap-2 rounded-xs text-left outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
@@ -91,5 +109,6 @@ export function OrgSwitcher({ orgName }: { orgName: string | null }) {
                 ))}
             </DropdownMenuContent>
         </DropdownMenu>
+        </>
     );
 }
