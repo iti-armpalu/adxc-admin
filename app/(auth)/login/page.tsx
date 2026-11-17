@@ -37,7 +37,15 @@ export default async function LoginPage({
             {/* Brand panel (lg+ only) */}
             <section className="relative isolate hidden flex-col justify-between overflow-hidden bg-brand-700 p-12 text-white lg:flex">
                 <GridGlow />
-                <Logo className="w-9" />
+                {/* Logo with tagline; its plum/near-black fills are turned white for the dark panel. */}
+                {/* eslint-disable-next-line @next/next/no-img-element -- SVG: plain img by convention */}
+                <img
+                    src="/adxc-logo-with-tagline.svg"
+                    alt="ADXC"
+                    width={771}
+                    height={310}
+                    className="h-auto w-40 brightness-0 invert"
+                />
 
                 <div className="max-w-[480px] space-y-4">
                     <h2 className="text-h1 text-white">
