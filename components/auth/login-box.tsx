@@ -11,9 +11,14 @@ import { useRouter } from "next/navigation";
 import { AuthFlowType, B2BProducts, StytchB2B, shadcnTheme, useStytchMemberSession } from "@stytch/nextjs/b2b";
 import { SESSION_MINUTES } from "@/lib/auth/config";
 
+// SSO returns to `${origin}/login`, which Stytch must have on its allowed list (https only
+// in production). Rob has allowed only app.adxc.ai, so SSO is offered there and nowhere else
+// (not localhost, not the *.vercel.app address). Add an origin here once Rob allows it.
+const SSO_ORIGINS = ["https://app.adxc.ai"];
+
 const baseConfig = {
     authFlowType: AuthFlowType.Discovery,
-    products: [B2BProducts.emailOtp, B2BProducts.sso],
+    products: [B2BProducts.emailOtp],
     sessionOptions: { sessionDurationMinutes: SESSION_MINUTES },
     disableCreateOrganization: true,
     // Most people belong to one org: skip the picker for them.
@@ -50,8 +55,14 @@ export function LoginBox({ next }: { next: string }) {
 
     // SSO must return to this site (app.adxc.ai, the Vercel URL or localhost), not Stytch's default.
     const config = useMemo(() => {
-        const returnTo = typeof window === "undefined" ? undefined : `${window.location.origin}/login`;
-        return { ...baseConfig, ssoOptions: { loginRedirectURL: returnTo, signupRedirectURL: returnTo } };
+        const origin = typeof window === "undefined" ? null : window.location.origin;
+        if (!origin || !SSO_ORIGINS.includes(origin)) return baseConfig; // email codes only
+        const returnTo = `${origin}/login`; // exactly https://app.adxc.ai/login
+        return {
+            ...baseConfig,
+            products: [B2BProducts.emailOtp, B2BProducts.sso],
+            ssoOptions: { loginRedirectURL: returnTo, signupRedirectURL: returnTo },
+        };
     }, []);
 
     useEffect(() => {
