@@ -11,10 +11,11 @@ export const metadata = { title: "Sign in · ADXC" };
 
 // Monitoring/testing mode: copy avoids spend, credits and billing.
 // Partner logos are the providers' own SVGs, shown in one neutral colour (see the filter below).
-const PARTNERS: { name: string; src: string }[] = [
-    { name: "YouGov", src: "/yougov-logo.svg" },
-    { name: "Quid", src: "/quid-logo.svg" },
-    { name: "Serpstat", src: "/serpstat-logo-1.svg" },
+// `size` balances the wordmarks optically: QUID is chunky, so it sits a touch smaller.
+const PARTNERS: { name: string; src: string; size: string }[] = [
+    { name: "YouGov", src: "/yougov-logo.svg", size: "h-5" },
+    { name: "Quid", src: "/quid-logo.svg", size: "h-4" },
+    { name: "Serpstat", src: "/serpstat-logo-1.svg", size: "h-5" },
 ];
 
 function Logo({ className }: { className?: string }) {
@@ -35,7 +36,7 @@ export default async function LoginPage({
     return (
         <main className="grid min-h-screen lg:grid-cols-2">
             {/* Brand panel (lg+ only) */}
-            <section className="relative isolate hidden flex-col justify-between overflow-hidden bg-brand-700 p-12 text-white lg:flex">
+            <section className="relative isolate hidden flex-col overflow-hidden bg-brand-700 p-12 text-white lg:flex">
                 <GridGlow />
                 {/* Logo with tagline; its plum/near-black fills are turned white for the dark panel. */}
                 {/* eslint-disable-next-line @next/next/no-img-element -- SVG: plain img by convention */}
@@ -47,12 +48,15 @@ export default async function LoginPage({
                     className="h-auto w-40 brightness-0 invert"
                 />
 
+                {/* Centred in the space between logo and strip, so it lines up with the form. */}
+                <div className="flex flex-1 items-center py-12">
                 <div className="max-w-[480px] space-y-4">
                     <h2 className="text-h1 text-white">
                         <span className="block">Data you can rely on</span>
                         <span className="block">for big decisions</span>
                     </h2>
                     <p className="text-brand-100">Monitor queries, answers and activity across ADXC.</p>
+                </div>
                 </div>
 
                 <div className="space-y-3">
@@ -63,10 +67,10 @@ export default async function LoginPage({
                                 {/* brightness(0) invert(1) turns every colour in the file white, so the
                                     brand logos read as one neutral set on the plum panel. */}
                                 {/* eslint-disable-next-line @next/next/no-img-element -- SVG: plain img by convention */}
-                                <img src={p.src} alt={p.name} className="h-6 w-auto opacity-80 brightness-0 invert" />
+                                <img src={p.src} alt={p.name} className={`${p.size} w-auto opacity-60 brightness-0 invert`} />
                             </li>
                         ))}
-                        <li className="text-sm text-brand-200">More coming soon</li>
+                        <li className="text-xs text-brand-200">More coming soon</li>
                     </ul>
                 </div>
             </section>
@@ -79,14 +83,16 @@ export default async function LoginPage({
                     </div>
                     <header className="space-y-1">
                         <h1 className="text-h3">Sign in</h1>
-                        <p className="text-sm text-muted-foreground">Enter your work email and we&apos;ll send you a code.</p>
+                        <p className="text-sm text-muted-foreground">Sign in with your work email.</p>
                     </header>
-                    <div className="border bg-card">
-                        <LoginBox next={next} />
+                    <div className="space-y-3">
+                        <div className="border bg-card">
+                            <LoginBox next={next} />
+                        </div>
+                        <p className="text-center text-xs text-muted-foreground">
+                            Need access? Contact your ADXC account manager.
+                        </p>
                     </div>
-                    <p className="text-center text-sm text-muted-foreground">
-                        Need access? Contact your ADXC account manager.
-                    </p>
                 </div>
             </section>
         </main>
