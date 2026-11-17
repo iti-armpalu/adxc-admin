@@ -10,12 +10,11 @@ import { safeNext } from "@/lib/auth/config";
 export const metadata = { title: "Sign in · ADXC" };
 
 // Monitoring/testing mode: copy avoids spend, credits and billing.
-// TODO: wire up partner logos — add official white/mono SVGs to /public/logos and set `src`.
-// Until then each partner shows as a text wordmark.
-const PARTNERS: { name: string; src?: string }[] = [
-    { name: "YouGov" },
-    { name: "Quid" },
-    { name: "Serpstat" },
+// Partner logos are the providers' own SVGs, shown in one neutral colour (see the filter below).
+const PARTNERS: { name: string; src: string }[] = [
+    { name: "YouGov", src: "/yougov-logo.svg" },
+    { name: "Quid", src: "/quid-logo.svg" },
+    { name: "Serpstat", src: "/serpstat-logo-1.svg" },
 ];
 
 function Logo({ className }: { className?: string }) {
@@ -53,12 +52,10 @@ export default async function LoginPage({
                     <ul className="flex flex-wrap items-center gap-x-8 gap-y-3">
                         {PARTNERS.map((p) => (
                             <li key={p.name}>
-                                {p.src ? (
-                                    // eslint-disable-next-line @next/next/no-img-element -- SVG: plain img by convention
-                                    <img src={p.src} alt={p.name} className="h-6 w-auto" />
-                                ) : (
-                                    <span className="text-lg font-semibold tracking-tight text-white/90">{p.name}</span>
-                                )}
+                                {/* brightness(0) invert(1) turns every colour in the file white, so the
+                                    brand logos read as one neutral set on the plum panel. */}
+                                {/* eslint-disable-next-line @next/next/no-img-element -- SVG: plain img by convention */}
+                                <img src={p.src} alt={p.name} className="h-6 w-auto opacity-80 brightness-0 invert" />
                             </li>
                         ))}
                         <li className="text-sm text-brand-200">More coming soon</li>
