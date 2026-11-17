@@ -10,7 +10,7 @@ import { CopyField } from "@/components/copy-field";
 import { CreateRealmForm } from "@/components/realms/create-realm-form";
 import { AdxcApiError, getCurrentOrg, listRealmQueries, listRealms, isAuthError } from "@/lib/adxc/client";
 import { formatRelative } from "@/lib/adxc/format";
-import { orgMcpUrl } from "@/lib/adxc/mcp";
+import { realmMcpUrl } from "@/lib/adxc/mcp";
 import type { Realm } from "@/lib/adxc/types";
 
 type RealmStats = { total: number; lastAskedAt: string | null } | null;
@@ -44,7 +44,6 @@ export default async function RealmsPage() {
         return <LoadError error={err} />;
     }
     const { org, realms } = data;
-    const defaultUrl = orgMcpUrl(org.slug);
 
     return (
         <div className="animate-[adxc-fade_400ms_ease-out_both] motion-reduce:animate-none mx-auto max-w-5xl space-y-12 px-4 py-8 md:px-8">
@@ -64,7 +63,7 @@ export default async function RealmsPage() {
                 <h2 className="text-h4">All realms ({realms.length})</h2>
                 <ul className="space-y-4">
                     {realms.map(({ realm, stats }) => (
-                        <RealmCard key={realm.realm_id} realm={realm} stats={stats} defaultUrl={defaultUrl} />
+                        <RealmCard key={realm.realm_id} realm={realm} stats={stats} address={realmMcpUrl(org.slug, realm)} />
                     ))}
                 </ul>
             </section>
@@ -72,7 +71,7 @@ export default async function RealmsPage() {
     );
 }
 
-function RealmCard({ realm, stats, defaultUrl }: { realm: Realm; stats: RealmStats; defaultUrl: string | null }) {
+function RealmCard({ realm, stats, address }: { realm: Realm; stats: RealmStats; address: string | null }) {
     const href = `/questions?realm=${encodeURIComponent(realm.realm_id)}`;
     return (
         <li className="space-y-4 border bg-card p-5">
@@ -105,13 +104,11 @@ function RealmCard({ realm, stats, defaultUrl }: { realm: Realm; stats: RealmSta
 
             <div className="space-y-2">
                 <p className="text-caption uppercase text-muted-foreground">Connect address</p>
-                {realm.is_default && defaultUrl ? (
-                    <CopyField value={defaultUrl} />
+                {address ? (
+                    <CopyField value={address} />
                 ) : (
-                    // TODO: wire up per-realm addresses — waiting on Rob to return `mcp_url` on realms.
-                    <p className="border border-dashed px-3 py-2 text-sm text-muted-foreground">
-                        {realm.is_default ? "Not available yet." : "Each realm will get its own address here soon."}
-                    </p>
+                    // Only when the org has no slug, which the address is built from.
+                    <p className="border border-dashed px-3 py-2 text-sm text-muted-foreground">Not available yet.</p>
                 )}
             </div>
         </li>
