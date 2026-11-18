@@ -13,8 +13,8 @@ import { CopyButton } from "@/components/copy-button";
 import { MarkdownText } from "@/components/markdown-text";
 import { SupplierList } from "@/components/question/supplier-card";
 import { StatusBadge } from "@/components/status-badge";
-import { AdxcApiError, getCurrentOrg, getQuery, getRealm, listArtifacts, listClarifications, isAuthError } from "@/lib/adxc/client";
-import { formatDate, formatDateTime, formatTokens } from "@/lib/adxc/format";
+import { AdxcApiError, getCurrentOrg, getQuery, getRealm, listArtifacts, listClarifications, listOrgQueries, isAuthError } from "@/lib/adxc/client";
+import { formatDate, formatDateTime, formatRelative, formatTokens } from "@/lib/adxc/format";
 import { isRunning } from "@/lib/adxc/outcome";
 import type { QueryResult } from "@/lib/adxc/types";
 
@@ -22,14 +22,24 @@ async function load(realmId: string, queryId: string) {
     const org = await getCurrentOrg();
     const query = await getQuery(org.org_id, realmId, queryId);
     // Secondary data: a failure here shouldn't take the page down.
-    const [realm, clarifications, artifacts] = await Promise.allSettled([
+    const [realm, clarifications, artifacts, listing] = await Promise.allSettled([
         getRealm(org.org_id, realmId),
         listClarifications(org.org_id, realmId, queryId),
         listArtifacts(org.org_id, realmId, queryId),
+        // WORKAROUND (remove when Rob's API is updated): the single-query response has no
+        // asked_at / asked_by, but the org questions list does. So we fetch this realm's
+        // newest 100 questions and take this question's row from it. Costs one extra call
+        // per page view; older questions may not be in that batch (then we fall back below).
+        // TODO: wire up asked_at / asked_by from GET …/query/{query_id} once Rob adds them,
+        // and delete this call and `listRow`.
+        listOrgQueries(org.org_id, { realm_id: realmId, limit: 100 }),
     ]);
+    const listRow =
+        listing.status === "fulfilled" ? (listing.value.queries.find((r) => r.query_id === queryId) ?? null) : null;
     return {
         query,
-        realmName: realm.status === "fulfilled" ? realm.value.name : null,
+        listRow,
+        realmName: realm.status === "fulfilled" ? realm.value.name : (listRow?.realm_name ?? null),
         clarifications: clarifications.status === "fulfilled" ? clarifications.value : [],
         artifacts: artifacts.status === "fulfilled" ? artifacts.value : [],
     };
@@ -85,12 +95,21 @@ export default async function QuestionDetailPage({
         if (err instanceof AdxcApiError && err.status === 404) notFound();
         return <LoadError error={err} />;
     }
-    const { query: q, realmName, clarifications, artifacts } = data;
+    const { query: q, listRow, realmName, clarifications, artifacts } = data;
     const paid = Boolean(q.answer);
     const suppliers = q.suppliers ?? [];
     const messages = q.messages ?? [];
     const contributors = suppliers.filter((s) => s.status === "answered");
     const dataAsOf = latest(contributors.map((s) => s.as_of));
+    // WORKAROUND (see load): exact time and asker from the list row. If the question isn't in
+    // the newest 100, fall back to the first progress entry (logged when the run starts,
+    // normally seconds after asking) and leave "Asked by" out.
+    const askedAt = listRow?.asked_at ?? latest([messages.find((m) => m.at)?.at]);
+    const askedBy = listRow
+        ? listRow.asked_by_kind === "org_automation"
+            ? `${listRow.asked_by} (API key)`
+            : listRow.asked_by
+        : null;
     const note = explain(q, paid);
     const supplierName = (id: string) => suppliers.find((s) => s.supplier_id === id)?.display_name ?? id;
 
@@ -116,6 +135,8 @@ export default async function QuestionDetailPage({
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground lg:hidden">
                             <StatusBadge outcome={q.outcome} paid={paid} />
                             {realmName && <span>{realmName}</span>}
+                            {askedAt && <span>Asked {formatRelative(askedAt)}</span>}
+                            {askedBy && <span className="break-all">by {askedBy}</span>}
                             {q.price && <span>{formatTokens(q.price)} credits</span>}
                         </div>
                         {note && <p className="text-sm text-foreground-alt">{note}</p>}
@@ -201,6 +222,17 @@ export default async function QuestionDetailPage({
                     <p className="text-caption uppercase text-muted-foreground">Details</p>
                     <dl className="divide-y border bg-card text-sm">
                         <Fact label="Status"><StatusBadge outcome={q.outcome} paid={paid} /></Fact>
+                        {askedAt && (
+                            <Fact label="Asked">
+                                <span title={formatDateTime(askedAt)}>{formatDateTime(askedAt)}</span>
+                                <span className="block text-xs text-muted-foreground">{formatRelative(askedAt)}</span>
+                            </Fact>
+                        )}
+                        {askedBy && (
+                            <Fact label="Asked by">
+                                <span className="break-all">{askedBy}</span>
+                            </Fact>
+                        )}
                         {realmName && <Fact label="Realm">{realmName}</Fact>}
                         {q.price && <Fact label={paid ? "Cost" : "Price"}>{formatTokens(q.price)} credits</Fact>}
                         {contributors.length > 0 && (
