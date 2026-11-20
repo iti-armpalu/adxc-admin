@@ -4,7 +4,7 @@
 // data-partner strip at the bottom — and the form on the right. Below lg only the form shows.
 
 import { LoginBox } from "@/components/auth/login-box";
-import { GridGlow } from "@/components/grid-glow";
+import { BrandGlow } from "@/components/brand-glow";
 import { safeNext } from "@/lib/auth/config";
 
 export const metadata = { title: "Sign in · ADXC" };
@@ -37,7 +37,7 @@ export default async function LoginPage({
         <main className="grid min-h-screen lg:grid-cols-2">
             {/* Brand panel (lg+ only) */}
             <section className="relative isolate hidden flex-col overflow-hidden bg-brand-700 p-12 text-white lg:flex">
-                <GridGlow />
+                <BrandGlow />
                 {/* Logo with tagline; its plum/near-black fills are turned white for the dark panel. */}
                 {/* eslint-disable-next-line @next/next/no-img-element -- SVG: plain img by convention */}
                 <img
